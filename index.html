@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>GPS 자동 체크인 데모</title>
+  <title>GPS 체크인 - 가나아트센터</title>
   <style>
     body {
       font-family: sans-serif;
@@ -12,39 +12,52 @@
     #checkin-status {
       white-space: pre-line;
       margin-top: 15px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #333;
+    }
+    #checkinBtn {
+      padding: 10px 18px;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+    }
+    #checkinBtn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
   </style>
 </head>
 <body>
-  <h1>GPS 자동 체크인 (GitHub Pages 버전)</h1>
+  <h1>GPS 체크인 (평창동 가나아트센터)</h1>
+  <p>가나아트센터 반경 <b>50m 이내</b>에 들어오면 체크인 버튼이 활성화됩니다.</p>
+
   <p id="info">GPS 권한을 허용해주세요...</p>
+
+  <!-- ✅ 여기서 체크인 버튼 -->
+  <button id="checkinBtn" disabled>여기서 체크인하기</button>
+
   <div id="checkin-status"></div>
 
   <script>
-    // ⭐ 체크포인트 여러 개 예시
-    const checkpoints = [
-      {
-        id: 1,
-        name: "체크포인트 1 - 정문 근처",
-        lat: 37.565,
-        lon: 126.975,
-        radiusM: 50
-      },
-      {
-        id: 2,
-        name: "체크포인트 2 - 분수대 근처",
-        lat: 37.566,
-        lon: 126.976,
-        radiusM: 50
-      }
-    ];
+    const infoEl = document.getElementById('info');
+    const statusEl = document.getElementById('checkin-status');
+    const checkinBtn = document.getElementById('checkinBtn');
 
-    // 체크인 기록 저장용
-    const checkedSet = new Set();
+    // ⭐ 체크포인트: 평창동 가나아트센터
+    const checkpoint = {
+      id: 1,
+      name: "가나아트센터(평창동)",
+      lat: 37.6122099878,
+      lon: 126.9751811398,
+      radiusM: 50 // 요청대로 반경 50m
+    };
 
-    // 거리 계산 공식 (Haversine)
+    let lastDistance = null;
+    let currentPos = null;
+    let checkedIn = false;
+
+    // 거리 계산 (Haversine 공식)
     function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -58,46 +71,84 @@
       return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
     }
 
-    const infoEl = document.getElementById('info');
-    const statusEl = document.getElementById('checkin-status');
+    // ✅ 체크인 버튼 클릭 시 로직
+    checkinBtn.addEventListener('click', () => {
+      if (!currentPos) {
+        statusEl.textContent = "아직 현재 위치를 확인하지 못했습니다. 잠시만 기다렸다가 다시 시도해주세요.";
+        return;
+      }
 
-    // ⭐ 위치 추적 시작
+      const { latitude, longitude } = currentPos;
+      const distance = getDistanceFromLatLonInM(
+        latitude,
+        longitude,
+        checkpoint.lat,
+        checkpoint.lon
+      );
+
+      if (distance <= checkpoint.radiusM) {
+        checkedIn = true;
+        checkinBtn.disabled = true;
+        statusEl.textContent =
+          `✅ [${checkpoint.name}] 체크인 완료!\n` +
+          `(현재 거리: ${distance.toFixed(1)} m / 기준: ${checkpoint.radiusM} m)`;
+      } else {
+        statusEl.textContent =
+          `아직 체크포인트 반경 밖입니다.\n` +
+          `현재 거리: ${distance.toFixed(1)} m / 기준: ${checkpoint.radiusM} m`;
+      }
+    });
+
+    // ✅ 위치 추적 시작
     if (!navigator.geolocation) {
-      infoEl.textContent = "이 브라우저는 GPS를 지원하지 않습니다.";
+      infoEl.textContent = "이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.";
     } else {
-      infoEl.textContent = "현재 위치를 추적하는 중...";
+      infoEl.textContent = "현재 위치를 추적하는 중입니다. GPS 권한을 허용해주세요.";
 
       navigator.geolocation.watchPosition(
         (pos) => {
-          const lat = pos.coords.latitude;
-          const lon = pos.coords.longitude;
+          currentPos = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          };
+
+          const lat = currentPos.latitude;
+          const lon = currentPos.longitude;
 
           infoEl.textContent =
             `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
 
-          let output = "";
+          const distance = getDistanceFromLatLonInM(
+            lat,
+            lon,
+            checkpoint.lat,
+            checkpoint.lon
+          );
+          lastDistance = distance;
+          const dTxt = distance.toFixed(1);
 
-          checkpoints.forEach(cp => {
-            const distance = getDistanceFromLatLonInM(lat, lon, cp.lat, cp.lon);
-            const dTxt = distance.toFixed(1);
+          // 버튼 활성/비활성 제어
+          if (!checkedIn && distance <= checkpoint.radiusM) {
+            checkinBtn.disabled = false;
+          } else if (!checkedIn) {
+            checkinBtn.disabled = true;
+          }
 
-            if (distance <= cp.radiusM) {
-              if (!checkedSet.has(cp.id)) {
-                checkedSet.add(cp.id);
-                output += `✅ [${cp.name}] 새로 체크인 성공! (거리: ${dTxt} m)\n`;
-              } else {
-                output += `📍 [${cp.name}] 이미 체크인됨 (거리: ${dTxt} m)\n`;
-              }
-            } else {
-              output += `➡️ [${cp.name}]까지 ${dTxt} m 남음 (반경 ${cp.radiusM} m)\n`;
-            }
-          });
-
-          statusEl.textContent = output;
+          // 상태 안내
+          if (checkedIn) {
+            statusEl.textContent =
+              `✅ [${checkpoint.name}] 체크인 완료 상태입니다.\n` +
+              `현재 거리: ${dTxt} m`;
+          } else {
+            statusEl.textContent =
+              `⛳ 목표 지점: [${checkpoint.name}]\n` +
+              `현재 거리: 약 ${dTxt} m\n` +
+              `(반경 ${checkpoint.radiusM} m 안에 들어와야 체크인 버튼이 활성화됩니다)`;
+          }
         },
         (err) => {
           infoEl.textContent =
-            "GPS 오류: " + err.message + "\n(HTTPS 환경에서만 동작합니다)";
+            "GPS 오류: " + err.message + "\n(HTTPS 환경에서만 정상 동작합니다)";
         },
         {
           enableHighAccuracy: true,
