@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>GPS 자동 체크인 데모</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    #checkin-status {
+      white-space: pre-line;
+      margin-top: 15px;
+      font-size: 1.1rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>GPS 자동 체크인 (GitHub Pages 버전)</h1>
+  <p id="info">GPS 권한을 허용해주세요...</p>
+  <div id="checkin-status"></div>
+
+  <script>
+    // ⭐ 체크포인트 여러 개 예시
+    const checkpoints = [
+      {
+        id: 1,
+        name: "체크포인트 1 - 정문 근처",
+        lat: 37.565,
+        lon: 126.975,
+        radiusM: 50
+      },
+      {
+        id: 2,
+        name: "체크포인트 2 - 분수대 근처",
+        lat: 37.566,
+        lon: 126.976,
+        radiusM: 50
+      }
+    ];
+
+    // 체크인 기록 저장용
+    const checkedSet = new Set();
+
+    // 거리 계산 공식 (Haversine)
+    function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
+
+    const infoEl = document.getElementById('info');
+    const statusEl = document.getElementById('checkin-status');
+
+    // ⭐ 위치 추적 시작
+    if (!navigator.geolocation) {
+      infoEl.textContent = "이 브라우저는 GPS를 지원하지 않습니다.";
+    } else {
+      infoEl.textContent = "현재 위치를 추적하는 중...";
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          infoEl.textContent =
+            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
+
+          let output = "";
+
+          checkpoints.forEach(cp => {
+            const distance = getDistanceFromLatLonInM(lat, lon, cp.lat, cp.lon);
+            const dTxt = distance.toFixed(1);
+
+            if (distance <= cp.radiusM) {
+              if (!checkedSet.has(cp.id)) {
+                checkedSet.add(cp.id);
+                output += `✅ [${cp.name}] 새로 체크인 성공! (거리: ${dTxt} m)\n`;
+              } else {
+                output += `📍 [${cp.name}] 이미 체크인됨 (거리: ${dTxt} m)\n`;
+              }
+            } else {
+              output += `➡️ [${cp.name}]까지 ${dTxt} m 남음 (반경 ${cp.radiusM} m)\n`;
+            }
+          });
+
+          statusEl.textContent = output;
+        },
+        (err) => {
+          infoEl.textContent =
+            "GPS 오류: " + err.message + "\n(HTTPS 환경에서만 동작합니다)";
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
+        }
+      );
+    }
+  </script>
+</body>
+</html>
