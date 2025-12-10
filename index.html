@@ -2,213 +2,418 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>야모이자 GPS 체크인 관리자 페이지</title>
+  <title>야모이자 야외방탈출 체크인 시스템</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       padding: 16px;
+      line-height: 1.6;
       background: #f5f5f7;
-      line-height: 1.5;
     }
     h1 {
-      font-size: 1.3rem;
+      margin-bottom: 4px;
+      font-size: 1.4rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 16px;
       margin-bottom: 8px;
     }
-    #desc {
-      font-size: 0.9rem;
-      color: #555;
+    #meta {
+      display: none; /* 행사 ID / 팀 ID 안내는 블라인드 처리 (내부용) */
+    }
+    #info {
       margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: #333;
       white-space: pre-line;
     }
-    #controls {
-      margin-bottom: 12px;
-      font-size: 0.85rem;
+    #userSection {
+      margin: 10px 0 18px;
+      padding: 10px 12px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      font-size: 0.9rem;
     }
-    #controls input {
-      padding: 4px 6px;
-      font-size: 0.85rem;
-      border-radius: 4px;
+    #userNameInput {
+      width: 60%;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      border-radius: 6px;
       border: 1px solid #ccc;
-      margin-right: 4px;
+      margin-right: 8px;
     }
-    #controls button {
-      padding: 5px 8px;
-      font-size: 0.8rem;
-      border-radius: 4px;
+    #saveUserNameBtn {
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      border-radius: 6px;
       border: none;
       cursor: pointer;
       background: #2c7be5;
-      color: #fff;
-      margin-right: 4px;
+      color: white;
     }
-    #controls button.secondary {
-      background: #888;
+    #currentUserLabel {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #555;
+      white-space: pre-line;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.8rem;
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
+    .checkpoint {
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: #ffffff;
       box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
-    thead {
-      background: #e9ecef;
-    }
-    th, td {
-      padding: 6px 8px;
-      border-bottom: 1px solid #eee;
-      text-align: left;
-    }
-    th {
+    .cp-title {
       font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 1rem;
     }
-    tr:nth-child(even) td {
-      background: #fafafa;
-    }
-    #empty {
+    .cp-distance {
       font-size: 0.85rem;
-      color: #666;
-      margin-top: 10px;
+      margin-bottom: 6px;
+      color: #555;
+      white-space: pre-line;
+    }
+    .cp-status {
+      font-size: 0.85rem;
+      margin-top: 4px;
+      color: #333;
+      white-space: pre-line;
+    }
+    .cp-btn {
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      background: #2c7be5;
+      color: white;
+    }
+    .cp-btn:disabled {
+      background: #bbb;
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    #globalStatus {
+      margin-top: 16px;
+      font-size: 0.86rem;
+      color: #333;
+      white-space: pre-line;
+    }
+    #log {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #444;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      max-height: 200px;
+      overflow-y: auto;
+      white-space: pre-line;
     }
   </style>
 </head>
 <body>
-  <h1>야모이자 GPS 체크인 관리자 페이지</h1>
-  <div id="desc">
-    이 페이지는 이 브라우저(localStorage)에 저장된
-    체크인 기록을 조회하는 용도입니다.
-    (같은 기기·같은 브라우저에서 테스트할 때 사용)
+  <h1>야모이자 야외방탈출 체크인 시스템</h1>
+  <div id="meta"></div>
+
+  <div id="userSection">
+    <div>입장 후, <b>참가자 이름 또는 팀명</b>을 입력해 주세요.</div>
+    <div style="margin-top:6px;">
+      <input
+        id="userNameInput"
+        type="text"
+        placeholder="예) 1조 홍길동, 레드팀, 김대리"
+      />
+      <button id="saveUserNameBtn">이름 등록</button>
+    </div>
+    <div id="currentUserLabel">현재 등록된 이름: 없음</div>
   </div>
 
-  <div id="controls">
-    <input id="filterEvent" type="text" placeholder="행사 ID 필터 (예: YAMOIZA_GPS_TEST)" />
-    <input id="filterUser" type="text" placeholder="이름/팀명 필터" />
-    <button id="applyFilterBtn">필터 적용</button>
-    <button id="resetFilterBtn" class="secondary">필터 초기화</button>
-    <button id="clearBtn" class="secondary">로컬 기록 전체 삭제</button>
-  </div>
+  <p id="info">
+    GPS를 활용해 체크포인트 근처에 도착하면<br />
+    각 구역의 ‘여기서 체크인하기’ 버튼이 활성화됩니다.
+  </p>
 
-  <div id="tableWrapper"></div>
-  <div id="empty"></div>
+  <h2>체크포인트</h2>
+  <div id="checkpointsContainer"></div>
+
+  <div id="globalStatus"></div>
+
+  <h2>체크인 로그 (이 기기에서만 보이는 임시 기록)</h2>
+  <div id="log">아직 체크인 기록이 없습니다.</div>
 
   <script>
-    const KEY = 'yamoiza_gps_checkins';
+    const infoEl = document.getElementById('info');
+    const metaEl = document.getElementById('meta');
+    const cpContainer = document.getElementById('checkpointsContainer');
+    const globalStatusEl = document.getElementById('globalStatus');
+    const logEl = document.getElementById('log');
 
-    const filterEventInput = document.getElementById('filterEvent');
-    const filterUserInput = document.getElementById('filterUser');
-    const applyFilterBtn = document.getElementById('applyFilterBtn');
-    const resetFilterBtn = document.getElementById('resetFilterBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const tableWrapper = document.getElementById('tableWrapper');
-    const emptyEl = document.getElementById('empty');
+    const userNameInput = document.getElementById('userNameInput');
+    const saveUserNameBtn = document.getElementById('saveUserNameBtn');
+    const currentUserLabel = document.getElementById('currentUserLabel');
 
-    function loadData() {
-      const raw = localStorage.getItem(KEY);
-      if (!raw) return [];
-      try {
-        const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) return arr;
-        return [];
-      } catch (e) {
-        return [];
+    const STORAGE_KEY = 'yamoiza_gps_checkins';
+
+    // 1. URL 파라미터로 행사/팀 정보 받기 (화면에는 숨김, 내부용)
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('eventId') || '행사 미지정';
+    const teamId  = params.get('teamId')  || '팀 미지정';
+
+    metaEl.textContent = `eventId=${eventId}, teamId=${teamId}`;
+    metaEl.style.display = 'none';
+
+    let userName = '';
+
+    saveUserNameBtn.addEventListener('click', () => {
+      const value = userNameInput.value.trim();
+      if (!value) {
+        alert('이름 또는 팀명을 입력해 주세요.');
+        return;
       }
+      userName = value;
+      currentUserLabel.textContent = `현재 등록된 이름: ${userName}`;
+      appendLog(`※ 참여자 이름 등록: ${userName}`);
+    });
+
+    // 2. 체크포인트 정의 (원하는 만큼 추가 가능)
+    const checkpoints = [
+      {
+        id: 1,
+        name: "평창동 가나아트센터",
+        lat: 37.6122099878,
+        lon: 126.9751811398,
+        radiusM: 50,
+        checked: false
+      },
+      {
+        id: 2,
+        name: "홍제역 (지하철 3호선)",
+        lat: 37.5887974,
+        lon: 126.94411,
+        radiusM: 50,
+        checked: false
+      }
+    ];
+
+    const cpDom = {};
+    let currentPos = null;
+
+    // 3. 체크포인트 카드 생성
+    checkpoints.forEach(cp => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'checkpoint';
+      wrapper.id = `cp-${cp.id}`;
+
+      const title = document.createElement('div');
+      title.className = 'cp-title';
+      title.textContent = cp.name;
+
+      const distance = document.createElement('div');
+      distance.className = 'cp-distance';
+      distance.id = `cp-distance-${cp.id}`;
+      distance.textContent = '현재 거리 계산 중...';
+
+      const btn = document.createElement('button');
+      btn.className = 'cp-btn';
+      btn.id = `cp-btn-${cp.id}`;
+      btn.textContent = '여기서 체크인하기';
+      btn.disabled = true;
+
+      const status = document.createElement('div');
+      status.className = 'cp-status';
+      status.id = `cp-status-${cp.id}`;
+      status.textContent = '아직 체크인되지 않았습니다.';
+
+      wrapper.appendChild(title);
+      wrapper.appendChild(distance);
+      wrapper.appendChild(btn);
+      wrapper.appendChild(status);
+      cpContainer.appendChild(wrapper);
+
+      cpDom[cp.id] = { distanceEl: distance, btnEl: btn, statusEl: status };
+
+      btn.addEventListener('click', () => handleCheckin(cp.id));
+    });
+
+    // 4. 거리 계산 (Haversine)
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
 
-    function renderTable(data) {
-      tableWrapper.innerHTML = '';
-      emptyEl.textContent = '';
-
-      if (!data.length) {
-        emptyEl.textContent = '저장된 체크인 기록이 없습니다.';
+    // 5. 체크인 버튼 클릭 시
+    function handleCheckin(cpId) {
+      if (!currentPos) {
+        appendLog('⚠ 아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.');
         return;
       }
 
-      // 최신 기록이 위로 오게 정렬
-      data.sort((a, b) => (a.time < b.time ? 1 : -1));
+      const cp = checkpoints.find(c => c.id === cpId);
+      if (!cp) return;
 
-      const table = document.createElement('table');
-      const thead = document.createElement('thead');
-      const tbody = document.createElement('tbody');
+      const { btnEl, statusEl } = cpDom[cp.id];
 
-      thead.innerHTML = `
-        <tr>
-          <th>시간</th>
-          <th>행사 ID</th>
-          <th>팀 ID</th>
-          <th>참가자 이름</th>
-          <th>요약</th>
-        </tr>
-      `;
+      const dist = getDistance(
+        currentPos.latitude,
+        currentPos.longitude,
+        cp.lat,
+        cp.lon
+      );
 
-      data.forEach(rec => {
-        const tr = document.createElement('tr');
+      if (dist <= cp.radiusM) {
+        cp.checked = true;
+        btnEl.disabled = true;
 
-        const timeCell = document.createElement('td');
-        const eventCell = document.createElement('td');
-        const teamCell = document.createElement('td');
-        const userCell = document.createElement('td');
-        const textCell = document.createElement('td');
+        const now = new Date();
+        const timeStr = now.toLocaleString('ko-KR');
+        const displayName = userName || teamId || '이름/팀 미등록';
 
-        const timeText = rec.time
-          ? new Date(rec.time).toLocaleString('ko-KR')
-          : '-';
+        const msg =
+          `✅ 체크인 완료!\n` +
+          `· 장소: ${cp.name}\n` +
+          `· 거리: ${dist.toFixed(1)} m (기준: ${cp.radiusM} m 이내)\n` +
+          `· 시간: ${timeStr}\n` +
+          `· 참가자: ${displayName}`;
 
-        timeCell.textContent = timeText;
-        eventCell.textContent = rec.eventId || '-';
-        teamCell.textContent = rec.teamId || '-';
-        userCell.textContent = rec.userName || '-';
-        textCell.textContent = (rec.rawText || '').replace(/\n/g, ' / ');
+        statusEl.textContent = msg;
 
-        tr.appendChild(timeCell);
-        tr.appendChild(eventCell);
-        tr.appendChild(teamCell);
-        tr.appendChild(userCell);
-        tr.appendChild(textCell);
+        appendLog(
+          `✔ [${timeStr}]\n` +
+          `행사: ${eventId}\n` +
+          `참가자: ${displayName}\n` +
+          `장소: ${cp.name}\n` +
+          `거리: ${dist.toFixed(1)} m`
+        );
 
-        tbody.appendChild(tr);
-      });
-
-      table.appendChild(thead);
-      table.appendChild(tbody);
-      tableWrapper.appendChild(table);
+        updateGlobalStatus();
+      } else {
+        statusEl.textContent =
+          `❌ 반경 밖이라 체크인 불가.\n` +
+          `현재 거리: ${dist.toFixed(1)} m / 기준: ${cp.radiusM} m`;
+      }
     }
 
-    function applyFilter() {
-      let data = loadData();
+    // 6. 전체 요약 상태
+    function updateGlobalStatus() {
+      const total = checkpoints.length;
+      const done = checkpoints.filter(c => c.checked).length;
 
-      const fEvent = filterEventInput.value.trim().toLowerCase();
-      const fUser  = filterUserInput.value.trim().toLowerCase();
-
-      if (fEvent) {
-        data = data.filter(d => (d.eventId || '').toLowerCase().includes(fEvent));
-      }
-      if (fUser) {
-        data = data.filter(d => (d.userName || '').toLowerCase().includes(fUser));
-      }
-
-      renderTable(data);
+      globalStatusEl.textContent =
+        `총 체크포인트: ${total}개\n` +
+        `완료한 체크인: ${done}개`;
     }
 
-    applyFilterBtn.addEventListener('click', applyFilter);
+    // 7. 로그 출력 + localStorage 저장
+    function appendLog(text) {
+      // 화면 표시
+      if (logEl.textContent.trim() === '아직 체크인 기록이 없습니다.') {
+        logEl.textContent = '';
+      }
+      const logLine = text;
+      logEl.textContent = logLine + '\n\n' + logEl.textContent;
+      console.log('[CHECKIN_LOG]', logLine);
 
-    resetFilterBtn.addEventListener('click', () => {
-      filterEventInput.value = '';
-      filterUserInput.value = '';
-      applyFilter();
-    });
+      // localStorage 저장 (관리자 페이지용)
+      const now = new Date();
+      const isoTime = now.toISOString();
+      const record = {
+        time: isoTime,
+        eventId,
+        teamId,
+        userName: userName || teamId || '이름/팀 미등록',
+        rawText: logLine
+      };
 
-    clearBtn.addEventListener('click', () => {
-      const ok = confirm('정말 이 브라우저에 저장된 체크인 기록을 모두 삭제할까요?');
-      if (!ok) return;
-      localStorage.removeItem(KEY);
-      applyFilter();
-    });
+      const existing = localStorage.getItem(STORAGE_KEY);
+      let arr = [];
+      if (existing) {
+        try {
+          arr = JSON.parse(existing);
+          if (!Array.isArray(arr)) arr = [];
+        } catch (e) {
+          arr = [];
+        }
+      }
+      arr.push(record);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    }
 
-    // 초기 렌더링
-    applyFilter();
+    updateGlobalStatus();
+
+    // 8. GPS 위치 추적 시작
+    if (!navigator.geolocation) {
+      infoEl.textContent =
+        '이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.\n' +
+        '다른 브라우저(크롬 등)로 다시 시도해 주세요.';
+    } else {
+      infoEl.textContent =
+        'GPS로 현재 위치를 확인하고 있습니다.\n' +
+        '체크포인트 근처에 도착하면 버튼이 활성화됩니다.';
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          currentPos = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          };
+
+          // 안내 텍스트 (좌표는 사용자에게 직접 노출 X)
+          infoEl.textContent =
+            'GPS로 현재 위치를 확인 중입니다.\n' +
+            '근처 체크포인트로 이동해 주세요.';
+
+          checkpoints.forEach(cp => {
+            const d = getDistance(
+              currentPos.latitude,
+              currentPos.longitude,
+              cp.lat,
+              cp.lon
+            );
+            const dTxt = d.toFixed(1);
+            const { distanceEl, btnEl } = cpDom[cp.id];
+
+            distanceEl.textContent =
+              `현재 거리: ${dTxt} m\n` +
+              `(체크인 기준: ${cp.radiusM} m 이내)`;
+
+            if (!cp.checked && d <= cp.radiusM) {
+              btnEl.disabled = false;
+            } else if (!cp.checked) {
+              btnEl.disabled = true;
+            }
+          });
+
+          updateGlobalStatus();
+        },
+        (err) => {
+          infoEl.textContent =
+            'GPS 오류가 발생했습니다.\n' +
+            '· 위치 권한 허용 여부를 확인해 주세요.\n' +
+            '· 실내/지하에서는 인식이 어려울 수 있습니다.\n' +
+            `오류 메시지: ${err.message}`;
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
+        }
+      );
+    }
   </script>
 </body>
 </html>
