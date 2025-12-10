@@ -2,39 +2,56 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>GPS 체크인 - 가나아트센터 & 홍제역</title>
+  <title>야모이자 GPS 체크인 시스템</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
-      font-family: sans-serif;
-      padding: 20px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 16px;
       line-height: 1.6;
+      background: #f5f5f7;
     }
     h1 {
+      margin-bottom: 4px;
+      font-size: 1.4rem;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin-top: 16px;
       margin-bottom: 8px;
     }
+    #meta {
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 10px;
+      white-space: pre-line;
+    }
     #info {
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-      color: #444;
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: #333;
+      white-space: pre-line;
     }
     .checkpoint {
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 12px 14px;
       margin-bottom: 12px;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     .cp-title {
-      font-weight: bold;
+      font-weight: 600;
       margin-bottom: 4px;
+      font-size: 1rem;
     }
     .cp-distance {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-bottom: 6px;
       color: #555;
       white-space: pre-line;
     }
     .cp-status {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-top: 4px;
       color: #333;
       white-space: pre-line;
@@ -42,40 +59,69 @@
     .cp-btn {
       padding: 8px 14px;
       font-size: 0.9rem;
-      border-radius: 6px;
+      border-radius: 999px;
       border: none;
       cursor: pointer;
       background: #2c7be5;
       color: white;
     }
     .cp-btn:disabled {
-      background: #aaa;
-      opacity: 0.6;
+      background: #bbb;
+      opacity: 0.7;
       cursor: not-allowed;
     }
     #globalStatus {
       margin-top: 16px;
-      font-size: 0.9rem;
+      font-size: 0.86rem;
       color: #333;
+      white-space: pre-line;
+    }
+    #log {
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: #444;
+      background: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      max-height: 200px;
+      overflow-y: auto;
       white-space: pre-line;
     }
   </style>
 </head>
 <body>
-  <h1>📍 GPS 체크인 데모</h1>
+  <h1>📍 야모이자 GPS 체크인</h1>
+  <div id="meta"></div>
   <p id="info">GPS 권한을 허용해주세요...</p>
 
+  <h2>체크포인트</h2>
   <div id="checkpointsContainer"></div>
 
   <div id="globalStatus"></div>
 
+  <h2>체크인 로그 (이 페이지에서만 임시 표시)</h2>
+  <div id="log">아직 체크인 기록이 없습니다.</div>
+
   <script>
     const infoEl = document.getElementById('info');
+    const metaEl = document.getElementById('meta');
     const cpContainer = document.getElementById('checkpointsContainer');
     const globalStatusEl = document.getElementById('globalStatus');
+    const logEl = document.getElementById('log');
 
-    // ⭐ 체크포인트들
-    // 필요하면 여기 배열에 장소를 계속 추가하면 됨
+    // ✅ 1. URL 파라미터로 행사/팀 정보 받기 (QR용)
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get('eventId') || '행사 미지정';
+    const teamId  = params.get('teamId')  || '팀 미지정';
+
+    metaEl.textContent =
+      `행사 ID : ${eventId}\n` +
+      `팀 / 참가자 ID : ${teamId}\n\n` +
+      `※ QR 코드에 ?eventId=...&teamId=... 를 붙이면 자동으로 여기 표시됩니다.`;
+
+    // ✅ 2. 체크포인트 정의
+    // 여기 배열에 장소를 계속 추가하면 확장 가능
     const checkpoints = [
       {
         id: 1,
@@ -95,7 +141,10 @@
       }
     ];
 
-    // 체크포인트 카드 DOM 생성
+    // DOM 참조 저장용
+    const cpDom = {};
+
+    // ✅ 3. 체크포인트 카드 생성
     checkpoints.forEach(cp => {
       const wrapper = document.createElement('div');
       wrapper.className = 'checkpoint';
@@ -125,8 +174,10 @@
       wrapper.appendChild(distance);
       wrapper.appendChild(btn);
       wrapper.appendChild(status);
-
       cpContainer.appendChild(wrapper);
+
+      // 참조 저장
+      cpDom[cp.id] = { distanceEl: distance, btnEl: btn, statusEl: status };
 
       // 버튼 클릭 핸들러
       btn.addEventListener('click', () => handleCheckin(cp.id));
@@ -134,7 +185,7 @@
 
     let currentPos = null;
 
-    // 거리 계산 (Haversine)
+    // ✅ 4. 거리 계산 (Haversine 공식)
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -148,18 +199,17 @@
       return R * c;
     }
 
-    // 각 체크포인트 버튼 클릭 시
+    // ✅ 5. 체크인 버튼 클릭 시 로직
     function handleCheckin(cpId) {
       if (!currentPos) {
-        globalStatusEl.textContent = '아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.';
+        appendLog('⚠ 아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.');
         return;
       }
 
       const cp = checkpoints.find(c => c.id === cpId);
       if (!cp) return;
 
-      const btn = document.getElementById(`cp-btn-${cp.id}`);
-      const statusElCP = document.getElementById(`cp-status-${cp.id}`);
+      const { btnEl, statusEl } = cpDom[cp.id];
 
       const dist = getDistance(
         currentPos.latitude,
@@ -170,19 +220,36 @@
 
       if (dist <= cp.radiusM) {
         cp.checked = true;
-        btn.disabled = true;
-        statusElCP.textContent =
+        btnEl.disabled = true;
+
+        const now = new Date();
+        const timeStr = now.toLocaleString('ko-KR');
+
+        const msg =
           `✅ 체크인 완료!\n` +
-          `거리: ${dist.toFixed(1)} m (기준: ${cp.radiusM} m 이내)`;
+          `· 장소: ${cp.name}\n` +
+          `· 거리: ${dist.toFixed(1)} m (기준: ${cp.radiusM} m 이내)\n` +
+          `· 시간: ${timeStr}`;
+
+        statusEl.textContent = msg;
+
+        appendLog(
+          `✔ [${timeStr}]\n` +
+          `행사: ${eventId}\n` +
+          `팀/참가자: ${teamId}\n` +
+          `장소: ${cp.name}\n` +
+          `거리: ${dist.toFixed(1)} m\n`
+        );
+
         updateGlobalStatus();
       } else {
-        statusElCP.textContent =
+        statusEl.textContent =
           `❌ 반경 밖이라 체크인 불가.\n` +
           `현재 거리: ${dist.toFixed(1)} m / 기준: ${cp.radiusM} m`;
       }
     }
 
-    // 전체 요약 상태
+    // ✅ 6. 전체 요약 상태
     function updateGlobalStatus() {
       const total = checkpoints.length;
       const done = checkpoints.filter(c => c.checked).length;
@@ -192,11 +259,25 @@
         `완료한 체크인: ${done}개`;
     }
 
-    // 위치 추적 시작
+    // ✅ 7. 로그 출력 (현재는 화면/콘솔에만 표시)
+    function appendLog(text) {
+      if (logEl.textContent.trim() === '아직 체크인 기록이 없습니다.') {
+        logEl.textContent = '';
+      }
+      logEl.textContent = text + '\n\n' + logEl.textContent;
+      console.log('[CHECKIN_LOG]', text);
+    }
+
+    updateGlobalStatus();
+
+    // ✅ 8. GPS 위치 추적 시작
     if (!navigator.geolocation) {
       infoEl.textContent = '이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.';
     } else {
-      infoEl.textContent = '현재 위치를 추적하는 중입니다. GPS 권한을 허용해주세요.';
+      infoEl.textContent =
+        '현재 위치를 추적하는 중입니다.\n' +
+        '· 위치 권한을 허용해주세요.\n' +
+        '· HTTPS 환경(https://)에서만 정상 동작합니다.';
 
       navigator.geolocation.watchPosition(
         (pos) => {
@@ -209,23 +290,23 @@
           const lon = currentPos.longitude;
 
           infoEl.textContent =
-            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
+            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}\n` +
+            `※ 브라우저를 닫으면 위치 추적이 중단됩니다.`;
 
-          // 각 체크포인트까지 거리 계산 + 버튼 활성/비활성 업데이트
+          // 각 체크포인트까지 거리 계산 + 버튼 상태 업데이트
           checkpoints.forEach(cp => {
             const d = getDistance(lat, lon, cp.lat, cp.lon);
             const dTxt = d.toFixed(1);
-
-            const distanceEl = document.getElementById(`cp-distance-${cp.id}`);
-            const btn = document.getElementById(`cp-btn-${cp.id}`);
+            const { distanceEl, btnEl } = cpDom[cp.id];
 
             distanceEl.textContent =
-              `현재 거리: ${dTxt} m (체크인 기준: ${cp.radiusM} m 이내)`;
+              `현재 거리: ${dTxt} m\n` +
+              `(체크인 기준: ${cp.radiusM} m 이내)`;
 
             if (!cp.checked && d <= cp.radiusM) {
-              btn.disabled = false;
+              btnEl.disabled = false;
             } else if (!cp.checked) {
-              btn.disabled = true;
+              btnEl.disabled = true;
             }
           });
 
@@ -233,7 +314,8 @@
         },
         (err) => {
           infoEl.textContent =
-            'GPS 오류: ' + err.message + '\n(HTTPS 환경에서만 정상 동작합니다)';
+            'GPS 오류: ' + err.message + '\n' +
+            '(위치 권한, 데이터/Wi-Fi, HTTPS 여부를 확인해주세요.)';
         },
         {
           enableHighAccuracy: true,
