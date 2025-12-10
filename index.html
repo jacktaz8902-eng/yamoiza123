@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>GPS 체크인 - 평창동 가나아트센터 (테스트버전)</title>
+  <title>GPS 체크인 - 가나아트센터 + 홍제역 (테스트)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,12 +32,16 @@
   </style>
 </head>
 <body>
-  <h1>📍 테스트용 GPS 체크인 (현재 위치 = 평창30길 27)</h1>
-  <p>가나아트센터 반경 <b>50m</b> 이내이면 체크인이 가능합니다.</p>
+  <h1>📍 테스트용 GPS 체크인</h1>
+  <p>
+    현재 위치는 <b>서울시 평창30길 27(고정)</b>으로 가정하고,<br />
+    다음 두 곳 중 반경 <b>50m</b> 이내에 있으면 체크인이 됩니다.
+  </p>
+  <ul>
+    <li>체크포인트 1: 평창동 가나아트센터</li>
+    <li>체크포인트 2: 홍제역 (서울 지하철 3호선)</li>
+  </ul>
 
-  <p id="info">현재 위치를 고정한 테스트 버전입니다.</p>
-
-  <!-- 체크인 버튼 -->
   <button id="checkinBtn">여기서 체크인하기</button>
 
   <div id="checkin-status"></div>
@@ -46,15 +50,25 @@
     const statusEl = document.getElementById('checkin-status');
     const checkinBtn = document.getElementById('checkinBtn');
 
-    // ⭐ 체크포인트: 평창동 가나아트센터 (확정된 사실)
-    const checkpoint = {
-      name: "평창동 가나아트센터",
-      lat: 37.6122099878,
-      lon: 126.9751811398,
-      radiusM: 50
-    };
+    // ✅ 체크포인트들: 가나아트센터 + 홍제역
+    const checkpoints = [
+      {
+        id: 1,
+        name: "평창동 가나아트센터",
+        lat: 37.6122099878,
+        lon: 126.9751811398,
+        radiusM: 50
+      },
+      {
+        id: 2,
+        name: "홍제역 (지하철 3호선)",
+        lat: 37.5887974,
+        lon: 126.94411,
+        radiusM: 50
+      }
+    ];
 
-    // ⭐ 현재 위치: 서울시 평창30길 27 (테스트용 고정 좌표)
+    // ✅ 현재 위치: 서울시 평창30길 27 (테스트용 고정 좌표)
     const currentPos = {
       latitude: 37.612210,
       longitude: 126.975181
@@ -73,40 +87,62 @@
       return R * c;
     }
 
-    // ⭐ 체크인 버튼
-    checkinBtn.addEventListener("click", () => {
-      const dist = getDistance(
-        currentPos.latitude,
-        currentPos.longitude,
-        checkpoint.lat,
-        checkpoint.lon
-      );
+    // 초기 상태: 각 체크포인트까지 거리 보여주기
+    function renderInitialDistances() {
+      const lines = [];
+      checkpoints.forEach(cp => {
+        const dist = getDistance(
+          currentPos.latitude,
+          currentPos.longitude,
+          cp.lat,
+          cp.lon
+        );
+        lines.push(
+          `📍 [${cp.name}] 까지 거리: ${dist.toFixed(1)} m (반경 ${cp.radiusM} m)`
+        );
+      });
 
-      if (dist <= checkpoint.radiusM) {
+      statusEl.textContent =
+        `현재 위치: 서울시 평창30길 27 (고정)\n\n` +
+        lines.join("\n");
+    }
+
+    renderInitialDistances();
+
+    // 체크인 버튼 로직
+    checkinBtn.addEventListener("click", () => {
+      let successCheckpoint = null;
+      let messages = [];
+
+      checkpoints.forEach(cp => {
+        const dist = getDistance(
+          currentPos.latitude,
+          currentPos.longitude,
+          cp.lat,
+          cp.lon
+        );
+        if (dist <= cp.radiusM && !successCheckpoint) {
+          successCheckpoint = { ...cp, dist };
+        }
+        messages.push(
+          `- [${cp.name}] 까지 거리: ${dist.toFixed(1)} m (반경 ${cp.radiusM} m)`
+        );
+      });
+
+      if (successCheckpoint) {
         checkinBtn.disabled = true;
         statusEl.textContent =
           `✅ 체크인 성공!\n` +
-          `[${checkpoint.name}]\n` +
-          `거리: ${dist.toFixed(1)} m`;
+          `체크포인트: ${successCheckpoint.name}\n` +
+          `거리: ${successCheckpoint.dist.toFixed(1)} m\n\n` +
+          messages.join("\n");
       } else {
         statusEl.textContent =
-          `❌ 체크인 실패 (반경 밖)\n` +
-          `거리: ${dist.toFixed(1)} m`;
+          `❌ 체크인 실패 (두 체크포인트 모두 반경 밖)\n\n` +
+          messages.join("\n");
       }
     });
-
-    // 초기 거리 안내
-    const initialDistance = getDistance(
-      currentPos.latitude,
-      currentPos.longitude,
-      checkpoint.lat,
-      checkpoint.lon
-    );
-
-    statusEl.textContent =
-      `📍 현재 위치: 서울시 평창30길 27(고정)\n` +
-      `📍 체크포인트: ${checkpoint.name}\n\n` +
-      `현재 거리: ${initialDistance.toFixed(1)} m`;
   </script>
 </body>
 </html>
+
