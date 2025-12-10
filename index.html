@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>야모이자 GPS 체크인 시스템</title>
+  <title>야모이자 야외방탈출 체크인 시스템</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {
@@ -21,15 +21,43 @@
       margin-bottom: 8px;
     }
     #meta {
-      font-size: 0.9rem;
-      color: #555;
-      margin-bottom: 10px;
-      white-space: pre-line;
+      display: none; /* 행사 ID / 팀 ID 안내는 블라인드 처리 */
     }
     #info {
       margin-bottom: 12px;
       font-size: 0.9rem;
       color: #333;
+      white-space: pre-line;
+    }
+    #userSection {
+      margin: 10px 0 18px;
+      padding: 10px 12px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      font-size: 0.9rem;
+    }
+    #userNameInput {
+      width: 60%;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-right: 8px;
+    }
+    #saveUserNameBtn {
+      padding: 7px 12px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #2c7be5;
+      color: white;
+    }
+    #currentUserLabel {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: #555;
       white-space: pre-line;
     }
     .checkpoint {
@@ -91,16 +119,33 @@
   </style>
 </head>
 <body>
-  <h1>📍 야모이자 GPS 체크인</h1>
+  <h1>야모이자 야외방탈출 체크인 시스템</h1>
   <div id="meta"></div>
-  <p id="info">GPS 권한을 허용해주세요...</p>
+
+  <div id="userSection">
+    <div>입장 후, <b>참가자 이름 또는 팀명</b>을 입력해 주세요.</div>
+    <div style="margin-top:6px;">
+      <input
+        id="userNameInput"
+        type="text"
+        placeholder="예) 1조 홍길동, 레드팀, 김대리"
+      />
+      <button id="saveUserNameBtn">이름 등록</button>
+    </div>
+    <div id="currentUserLabel">현재 등록된 이름: 없음</div>
+  </div>
+
+  <p id="info">
+    GPS를 활용해 체크포인트 근처에 도착하면<br />
+    각 구역의 ‘여기서 체크인하기’ 버튼이 활성화됩니다.
+  </p>
 
   <h2>체크포인트</h2>
   <div id="checkpointsContainer"></div>
 
   <div id="globalStatus"></div>
 
-  <h2>체크인 로그 (이 페이지에서만 임시 표시)</h2>
+  <h2>체크인 로그</h2>
   <div id="log">아직 체크인 기록이 없습니다.</div>
 
   <script>
@@ -110,18 +155,34 @@
     const globalStatusEl = document.getElementById('globalStatus');
     const logEl = document.getElementById('log');
 
-    // ✅ 1. URL 파라미터로 행사/팀 정보 받기 (QR용)
+    const userNameInput = document.getElementById('userNameInput');
+    const saveUserNameBtn = document.getElementById('saveUserNameBtn');
+    const currentUserLabel = document.getElementById('currentUserLabel');
+
+    // ✅ 1. URL 파라미터로 행사/팀 정보 받기 (화면에는 노출 X, 내부에서만 사용)
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get('eventId') || '행사 미지정';
     const teamId  = params.get('teamId')  || '팀 미지정';
 
-    metaEl.textContent =
-      `행사 ID : ${eventId}\n` +
-      `팀 / 참가자 ID : ${teamId}\n\n` +
-      `※ QR 코드에 ?eventId=...&teamId=... 를 붙이면 자동으로 여기 표시됩니다.`;
+    // 내부용이라 metaEl은 숨겨두고, 콘솔에서만 확인 가능하게 유지
+    metaEl.textContent = `eventId=${eventId}, teamId=${teamId}`;
+    metaEl.style.display = 'none';
+
+    // 참가자 이름 (사용자 입력)
+    let userName = '';
+
+    saveUserNameBtn.addEventListener('click', () => {
+      const value = userNameInput.value.trim();
+      if (!value) {
+        alert('이름 또는 팀명을 입력해 주세요.');
+        return;
+      }
+      userName = value;
+      currentUserLabel.textContent = `현재 등록된 이름: ${userName}`;
+      appendLog(`※ 참여자 이름 등록: ${userName}`);
+    });
 
     // ✅ 2. 체크포인트 정의
-    // 여기 배열에 장소를 계속 추가하면 확장 가능
     const checkpoints = [
       {
         id: 1,
@@ -141,8 +202,8 @@
       }
     ];
 
-    // DOM 참조 저장용
     const cpDom = {};
+    let currentPos = null;
 
     // ✅ 3. 체크포인트 카드 생성
     checkpoints.forEach(cp => {
@@ -157,13 +218,13 @@
       const distance = document.createElement('div');
       distance.className = 'cp-distance';
       distance.id = `cp-distance-${cp.id}`;
-      distance.textContent = '거리 계산 중...';
+      distance.textContent = '현재 거리 계산 중...';
 
       const btn = document.createElement('button');
       btn.className = 'cp-btn';
       btn.id = `cp-btn-${cp.id}`;
       btn.textContent = '여기서 체크인하기';
-      btn.disabled = true; // 처음엔 비활성화
+      btn.disabled = true;
 
       const status = document.createElement('div');
       status.className = 'cp-status';
@@ -176,16 +237,12 @@
       wrapper.appendChild(status);
       cpContainer.appendChild(wrapper);
 
-      // 참조 저장
       cpDom[cp.id] = { distanceEl: distance, btnEl: btn, statusEl: status };
 
-      // 버튼 클릭 핸들러
       btn.addEventListener('click', () => handleCheckin(cp.id));
     });
 
-    let currentPos = null;
-
-    // ✅ 4. 거리 계산 (Haversine 공식)
+    // ✅ 4. 거리 계산 (Haversine)
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -199,10 +256,10 @@
       return R * c;
     }
 
-    // ✅ 5. 체크인 버튼 클릭 시 로직
+    // ✅ 5. 체크인 버튼 클릭 시
     function handleCheckin(cpId) {
       if (!currentPos) {
-        appendLog('⚠ 아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.');
+        appendLog('⚠ 아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.');
         return;
       }
 
@@ -225,18 +282,21 @@
         const now = new Date();
         const timeStr = now.toLocaleString('ko-KR');
 
+        const displayName = userName || teamId || '이름/팀 미등록';
+
         const msg =
           `✅ 체크인 완료!\n` +
           `· 장소: ${cp.name}\n` +
           `· 거리: ${dist.toFixed(1)} m (기준: ${cp.radiusM} m 이내)\n` +
-          `· 시간: ${timeStr}`;
+          `· 시간: ${timeStr}\n` +
+          `· 참가자: ${displayName}`;
 
         statusEl.textContent = msg;
 
         appendLog(
           `✔ [${timeStr}]\n` +
           `행사: ${eventId}\n` +
-          `팀/참가자: ${teamId}\n` +
+          `참가자: ${displayName}\n` +
           `장소: ${cp.name}\n` +
           `거리: ${dist.toFixed(1)} m\n`
         );
@@ -272,12 +332,13 @@
 
     // ✅ 8. GPS 위치 추적 시작
     if (!navigator.geolocation) {
-      infoEl.textContent = '이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.';
+      infoEl.textContent =
+        '이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.\n' +
+        '다른 브라우저(크롬 등)로 다시 시도해 주세요.';
     } else {
       infoEl.textContent =
-        '현재 위치를 추적하는 중입니다.\n' +
-        '· 위치 권한을 허용해주세요.\n' +
-        '· HTTPS 환경(https://)에서만 정상 동작합니다.';
+        'GPS로 현재 위치를 확인하고 있습니다.\n' +
+        '체크포인트 근처에 도착하면 버튼이 활성화됩니다.';
 
       navigator.geolocation.watchPosition(
         (pos) => {
@@ -286,16 +347,19 @@
             longitude: pos.coords.longitude
           };
 
-          const lat = currentPos.latitude;
-          const lon = currentPos.longitude;
-
+          // 좌표는 사용자에게 직접 노출하지 않고, 내부 계산에만 사용
+          // info 메시지는 고정된 안내만 유지
           infoEl.textContent =
-            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}\n` +
-            `※ 브라우저를 닫으면 위치 추적이 중단됩니다.`;
+            'GPS로 현재 위치를 확인 중입니다.\n' +
+            '근처 체크포인트로 이동해 주세요.';
 
-          // 각 체크포인트까지 거리 계산 + 버튼 상태 업데이트
           checkpoints.forEach(cp => {
-            const d = getDistance(lat, lon, cp.lat, cp.lon);
+            const d = getDistance(
+              currentPos.latitude,
+              currentPos.longitude,
+              cp.lat,
+              cp.lon
+            );
             const dTxt = d.toFixed(1);
             const { distanceEl, btnEl } = cpDom[cp.id];
 
@@ -314,8 +378,10 @@
         },
         (err) => {
           infoEl.textContent =
-            'GPS 오류: ' + err.message + '\n' +
-            '(위치 권한, 데이터/Wi-Fi, HTTPS 여부를 확인해주세요.)';
+            'GPS 오류가 발생했습니다.\n' +
+            '· 위치 권한 허용 여부를 확인해 주세요.\n' +
+            '· 실내/지하에서는 인식이 어려울 수 있습니다.\n' +
+            `오류 메시지: ${err.message}`;
         },
         {
           enableHighAccuracy: true,
