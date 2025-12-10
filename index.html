@@ -2,78 +2,139 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>GPS 체크인 - 가나아트센터 + 홍제역 (테스트)</title>
+  <title>GPS 체크인 - 가나아트센터 & 홍제역</title>
   <style>
     body {
       font-family: sans-serif;
       padding: 20px;
       line-height: 1.6;
     }
-    #checkin-status {
-      white-space: pre-line;
-      margin-top: 15px;
-      font-size: 1.05rem;
-      color: #333;
+    h1 {
+      margin-bottom: 8px;
     }
-    #checkinBtn {
-      padding: 12px 22px;
-      font-size: 1.1rem;
+    #info {
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      color: #444;
+    }
+    .checkpoint {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    }
+    .cp-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .cp-distance {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #555;
+      white-space: pre-line;
+    }
+    .cp-status {
+      font-size: 0.9rem;
+      margin-top: 4px;
+      color: #333;
+      white-space: pre-line;
+    }
+    .cp-btn {
+      padding: 8px 14px;
+      font-size: 0.9rem;
       border-radius: 6px;
       border: none;
       cursor: pointer;
       background: #2c7be5;
       color: white;
     }
-    #checkinBtn:disabled {
-      background: gray;
-      opacity: 0.5;
+    .cp-btn:disabled {
+      background: #aaa;
+      opacity: 0.6;
       cursor: not-allowed;
+    }
+    #globalStatus {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: #333;
+      white-space: pre-line;
     }
   </style>
 </head>
 <body>
-  <h1>📍 테스트용 GPS 체크인</h1>
-  <p>
-    현재 위치는 <b>서울시 평창30길 27(고정)</b>으로 가정하고,<br />
-    다음 두 곳 중 반경 <b>50m</b> 이내에 있으면 체크인이 됩니다.
-  </p>
-  <ul>
-    <li>체크포인트 1: 평창동 가나아트센터</li>
-    <li>체크포인트 2: 홍제역 (서울 지하철 3호선)</li>
-  </ul>
+  <h1>📍 GPS 체크인 데모</h1>
+  <p id="info">GPS 권한을 허용해주세요...</p>
 
-  <button id="checkinBtn">여기서 체크인하기</button>
+  <div id="checkpointsContainer"></div>
 
-  <div id="checkin-status"></div>
+  <div id="globalStatus"></div>
 
   <script>
-    const statusEl = document.getElementById('checkin-status');
-    const checkinBtn = document.getElementById('checkinBtn');
+    const infoEl = document.getElementById('info');
+    const cpContainer = document.getElementById('checkpointsContainer');
+    const globalStatusEl = document.getElementById('globalStatus');
 
-    // ✅ 체크포인트들: 가나아트센터 + 홍제역
+    // ⭐ 체크포인트들
+    // 필요하면 여기 배열에 장소를 계속 추가하면 됨
     const checkpoints = [
       {
         id: 1,
         name: "평창동 가나아트센터",
         lat: 37.6122099878,
         lon: 126.9751811398,
-        radiusM: 50
+        radiusM: 50,
+        checked: false
       },
       {
         id: 2,
         name: "홍제역 (지하철 3호선)",
         lat: 37.5887974,
         lon: 126.94411,
-        radiusM: 50
+        radiusM: 50,
+        checked: false
       }
     ];
 
-    // ✅ 현재 위치: 서울시 평창30길 27 (테스트용 고정 좌표)
-    const currentPos = {
-      latitude: 37.612210,
-      longitude: 126.975181
-    };
+    // 체크포인트 카드 DOM 생성
+    checkpoints.forEach(cp => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'checkpoint';
+      wrapper.id = `cp-${cp.id}`;
 
+      const title = document.createElement('div');
+      title.className = 'cp-title';
+      title.textContent = cp.name;
+
+      const distance = document.createElement('div');
+      distance.className = 'cp-distance';
+      distance.id = `cp-distance-${cp.id}`;
+      distance.textContent = '거리 계산 중...';
+
+      const btn = document.createElement('button');
+      btn.className = 'cp-btn';
+      btn.id = `cp-btn-${cp.id}`;
+      btn.textContent = '여기서 체크인하기';
+      btn.disabled = true; // 처음엔 비활성화
+
+      const status = document.createElement('div');
+      status.className = 'cp-status';
+      status.id = `cp-status-${cp.id}`;
+      status.textContent = '아직 체크인되지 않았습니다.';
+
+      wrapper.appendChild(title);
+      wrapper.appendChild(distance);
+      wrapper.appendChild(btn);
+      wrapper.appendChild(status);
+
+      cpContainer.appendChild(wrapper);
+
+      // 버튼 클릭 핸들러
+      btn.addEventListener('click', () => handleCheckin(cp.id));
+    });
+
+    let currentPos = null;
+
+    // 거리 계산 (Haversine)
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -87,62 +148,100 @@
       return R * c;
     }
 
-    // 초기 상태: 각 체크포인트까지 거리 보여주기
-    function renderInitialDistances() {
-      const lines = [];
-      checkpoints.forEach(cp => {
-        const dist = getDistance(
-          currentPos.latitude,
-          currentPos.longitude,
-          cp.lat,
-          cp.lon
-        );
-        lines.push(
-          `📍 [${cp.name}] 까지 거리: ${dist.toFixed(1)} m (반경 ${cp.radiusM} m)`
-        );
-      });
+    // 각 체크포인트 버튼 클릭 시
+    function handleCheckin(cpId) {
+      if (!currentPos) {
+        globalStatusEl.textContent = '아직 현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.';
+        return;
+      }
 
-      statusEl.textContent =
-        `현재 위치: 서울시 평창30길 27 (고정)\n\n` +
-        lines.join("\n");
+      const cp = checkpoints.find(c => c.id === cpId);
+      if (!cp) return;
+
+      const btn = document.getElementById(`cp-btn-${cp.id}`);
+      const statusElCP = document.getElementById(`cp-status-${cp.id}`);
+
+      const dist = getDistance(
+        currentPos.latitude,
+        currentPos.longitude,
+        cp.lat,
+        cp.lon
+      );
+
+      if (dist <= cp.radiusM) {
+        cp.checked = true;
+        btn.disabled = true;
+        statusElCP.textContent =
+          `✅ 체크인 완료!\n` +
+          `거리: ${dist.toFixed(1)} m (기준: ${cp.radiusM} m 이내)`;
+        updateGlobalStatus();
+      } else {
+        statusElCP.textContent =
+          `❌ 반경 밖이라 체크인 불가.\n` +
+          `현재 거리: ${dist.toFixed(1)} m / 기준: ${cp.radiusM} m`;
+      }
     }
 
-    renderInitialDistances();
+    // 전체 요약 상태
+    function updateGlobalStatus() {
+      const total = checkpoints.length;
+      const done = checkpoints.filter(c => c.checked).length;
 
-    // 체크인 버튼 로직
-    checkinBtn.addEventListener("click", () => {
-      let successCheckpoint = null;
-      let messages = [];
+      globalStatusEl.textContent =
+        `총 체크포인트: ${total}개\n` +
+        `완료한 체크인: ${done}개`;
+    }
 
-      checkpoints.forEach(cp => {
-        const dist = getDistance(
-          currentPos.latitude,
-          currentPos.longitude,
-          cp.lat,
-          cp.lon
-        );
-        if (dist <= cp.radiusM && !successCheckpoint) {
-          successCheckpoint = { ...cp, dist };
+    // 위치 추적 시작
+    if (!navigator.geolocation) {
+      infoEl.textContent = '이 브라우저는 GPS(위치 정보)를 지원하지 않습니다.';
+    } else {
+      infoEl.textContent = '현재 위치를 추적하는 중입니다. GPS 권한을 허용해주세요.';
+
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          currentPos = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude
+          };
+
+          const lat = currentPos.latitude;
+          const lon = currentPos.longitude;
+
+          infoEl.textContent =
+            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
+
+          // 각 체크포인트까지 거리 계산 + 버튼 활성/비활성 업데이트
+          checkpoints.forEach(cp => {
+            const d = getDistance(lat, lon, cp.lat, cp.lon);
+            const dTxt = d.toFixed(1);
+
+            const distanceEl = document.getElementById(`cp-distance-${cp.id}`);
+            const btn = document.getElementById(`cp-btn-${cp.id}`);
+
+            distanceEl.textContent =
+              `현재 거리: ${dTxt} m (체크인 기준: ${cp.radiusM} m 이내)`;
+
+            if (!cp.checked && d <= cp.radiusM) {
+              btn.disabled = false;
+            } else if (!cp.checked) {
+              btn.disabled = true;
+            }
+          });
+
+          updateGlobalStatus();
+        },
+        (err) => {
+          infoEl.textContent =
+            'GPS 오류: ' + err.message + '\n(HTTPS 환경에서만 정상 동작합니다)';
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
         }
-        messages.push(
-          `- [${cp.name}] 까지 거리: ${dist.toFixed(1)} m (반경 ${cp.radiusM} m)`
-        );
-      });
-
-      if (successCheckpoint) {
-        checkinBtn.disabled = true;
-        statusEl.textContent =
-          `✅ 체크인 성공!\n` +
-          `체크포인트: ${successCheckpoint.name}\n` +
-          `거리: ${successCheckpoint.dist.toFixed(1)} m\n\n` +
-          messages.join("\n");
-      } else {
-        statusEl.textContent =
-          `❌ 체크인 실패 (두 체크포인트 모두 반경 밖)\n\n` +
-          messages.join("\n");
-      }
-    });
+      );
+    }
   </script>
 </body>
 </html>
-
