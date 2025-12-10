@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>GPS 체크인 - 평창동 가나아트센터</title>
+  <title>GPS 체크인 - 평창동 가나아트센터 (테스트버전)</title>
   <style>
     body {
       font-family: sans-serif;
@@ -32,33 +32,34 @@
   </style>
 </head>
 <body>
-  <h1>📍 GPS 체크인 (평창동 가나아트센터)</h1>
-  <p>가나아트센터 반경 <b>50m</b> 안에 들어오면 체크인 버튼이 활성화됩니다.</p>
+  <h1>📍 테스트용 GPS 체크인 (현재 위치 = 평창30길 27)</h1>
+  <p>가나아트센터 반경 <b>50m</b> 이내이면 체크인이 가능합니다.</p>
 
-  <p id="info">GPS 권한을 허용해주세요...</p>
+  <p id="info">현재 위치를 고정한 테스트 버전입니다.</p>
 
-  <!-- ⭐ 체크인 버튼 -->
-  <button id="checkinBtn" disabled>여기서 체크인하기</button>
+  <!-- 체크인 버튼 -->
+  <button id="checkinBtn">여기서 체크인하기</button>
 
   <div id="checkin-status"></div>
 
   <script>
-    const infoEl = document.getElementById('info');
     const statusEl = document.getElementById('checkin-status');
     const checkinBtn = document.getElementById('checkinBtn');
 
-    // ⭐ 체크포인트: 평창동 가나아트센터 (공식 등록 좌표 기반)
+    // ⭐ 체크포인트: 평창동 가나아트센터 (확정된 사실)
     const checkpoint = {
       name: "평창동 가나아트센터",
       lat: 37.6122099878,
       lon: 126.9751811398,
-      radiusM: 50 // 요청한 50m 반경
+      radiusM: 50
     };
 
-    let currentPos = null;
-    let checkedIn = false;
+    // ⭐ 현재 위치: 서울시 평창30길 27 (테스트용 고정 좌표)
+    const currentPos = {
+      latitude: 37.612210,
+      longitude: 126.975181
+    };
 
-    // 거리 계산 (Haversine 공식)
     function getDistance(lat1, lon1, lat2, lon2) {
       const R = 6371000;
       const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -68,14 +69,12 @@
         Math.cos(lat1 * Math.PI / 180) *
         Math.cos(lat2 * Math.PI / 180) *
         Math.sin(dLon / 2) ** 2;
-
-      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
     }
 
-    // ⭐ 체크인 버튼 이벤트
+    // ⭐ 체크인 버튼
     checkinBtn.addEventListener("click", () => {
-      if (!currentPos) return;
-
       const dist = getDistance(
         currentPos.latitude,
         currentPos.longitude,
@@ -84,65 +83,30 @@
       );
 
       if (dist <= checkpoint.radiusM) {
-        checkedIn = true;
         checkinBtn.disabled = true;
         statusEl.textContent =
           `✅ 체크인 성공!\n` +
           `[${checkpoint.name}]\n` +
-          `현재 거리: ${dist.toFixed(1)} m`;
+          `거리: ${dist.toFixed(1)} m`;
       } else {
         statusEl.textContent =
-          `❌ 체크인 실패. 반경 밖입니다.\n` +
-          `현재 거리: ${dist.toFixed(1)} m`;
+          `❌ 체크인 실패 (반경 밖)\n` +
+          `거리: ${dist.toFixed(1)} m`;
       }
     });
 
-    // ⭐ GPS 추적 시작
-    if (!navigator.geolocation) {
-      infoEl.textContent = "이 브라우저는 GPS를 지원하지 않습니다.";
-    } else {
-      infoEl.textContent = "현재 위치를 확인하는 중...";
+    // 초기 거리 안내
+    const initialDistance = getDistance(
+      currentPos.latitude,
+      currentPos.longitude,
+      checkpoint.lat,
+      checkpoint.lon
+    );
 
-      navigator.geolocation.watchPosition(
-        (pos) => {
-          currentPos = {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude
-          };
-
-          const lat = currentPos.latitude;
-          const lon = currentPos.longitude;
-
-          infoEl.textContent =
-            `현재 위치 → 위도: ${lat.toFixed(6)}, 경도: ${lon.toFixed(6)}`;
-
-          const dist = getDistance(lat, lon, checkpoint.lat, checkpoint.lon);
-          const dTxt = dist.toFixed(1);
-
-          // 버튼 활성화 조건
-          if (!checkedIn && dist <= checkpoint.radiusM) {
-            checkinBtn.disabled = false;
-          } else if (!checkedIn) {
-            checkinBtn.disabled = true;
-          }
-
-          // 상태 표시
-          statusEl.textContent =
-            `📍 목표지점: ${checkpoint.name}\n` +
-            `현재거리: 약 ${dTxt} m\n` +
-            `(반경 ${checkpoint.radiusM}m 안에 들어오면 체크인 가능)`;
-        },
-        (err) => {
-          infoEl.textContent =
-            "GPS 오류 발생: " + err.message + "\n(HTTPS 환경에서 테스트해주세요)";
-        },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 0,
-          timeout: 10000
-        }
-      );
-    }
+    statusEl.textContent =
+      `📍 현재 위치: 서울시 평창30길 27(고정)\n` +
+      `📍 체크포인트: ${checkpoint.name}\n\n` +
+      `현재 거리: ${initialDistance.toFixed(1)} m`;
   </script>
 </body>
 </html>
