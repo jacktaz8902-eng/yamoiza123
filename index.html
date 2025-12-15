@@ -4,261 +4,137 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>유관순 서대문형무소의 노래</title>
-
+  <title>서대문형무소의 철창 숫자</title>
   <style>
     :root{
-      --bg:#07090c;
-      --ink:#e7e1d6;
-      --muted:#b7ad9b;
-      --panel:#0f141e;
-      --accent:#d7c49b;
-      --ok:#7CFFB2;
-      --bad:#ff6b6b;
+      --bg:#07090c; --ink:#e7e1d6; --muted:#b7ad9b;
+      --panel:#0f141e; --accent:#d7c49b;
+      --ok:#7CFFB2; --bad:#ff6b6b;
     }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-
+    *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Noto Sans KR", Arial, sans-serif;
-      color:var(--ink);
-      background:var(--bg);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:20px;
-
-      /* 서대문형무소 감빵 분위기 */
-      background-image:
+      margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;
+      padding:20px; color:var(--ink); font-family:system-ui,-apple-system,"Noto Sans KR",Arial,sans-serif;
+      background:
         radial-gradient(900px 600px at 20% 15%, rgba(255,255,255,.05), transparent 60%),
-        repeating-linear-gradient(
-          90deg,
-          rgba(255,255,255,.03),
-          rgba(255,255,255,.03) 2px,
-          transparent 2px,
-          transparent 28px
-        ),
-        repeating-linear-gradient(
-          0deg,
-          rgba(0,0,0,.35),
-          rgba(0,0,0,.35) 1px,
-          transparent 1px,
-          transparent 8px
-        );
-      background-blend-mode: screen, overlay, multiply;
+        repeating-linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.03) 2px, transparent 2px, transparent 28px),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,.35) 1px, transparent 1px, transparent 8px),
+        var(--bg);
+      background-blend-mode:screen,overlay,multiply,normal;
     }
-
-    .wrap{
-      width:min(720px,100%);
-    }
-
-    header{
-      text-align:center;
-      margin-bottom:14px;
-    }
-
-    h1{
-      margin:0;
-      font-size:clamp(22px,3.5vw,34px);
-      text-shadow:0 2px 12px rgba(0,0,0,.6);
-    }
-
-    .sub{
-      margin-top:8px;
-      font-size:13px;
-      color:var(--muted);
-      letter-spacing:.1em;
-    }
-
+    .wrap{width:min(760px,100%)}
+    header{text-align:center;margin-bottom:14px}
+    h1{margin:0;font-size:clamp(22px,3.5vw,34px);text-shadow:0 2px 12px rgba(0,0,0,.6)}
+    .sub{margin-top:8px;color:var(--muted);font-size:13px;letter-spacing:.08em}
     .card{
       background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.3));
-      border:1px solid rgba(255,255,255,.12);
-      border-radius:18px;
-      padding:24px 20px;
-      box-shadow:0 20px 60px rgba(0,0,0,.7);
-      position:relative;
-      overflow:hidden;
+      border:1px solid rgba(255,255,255,.12); border-radius:18px;
+      padding:24px 20px; box-shadow:0 20px 60px rgba(0,0,0,.7);
+      position:relative; overflow:hidden;
     }
-
     .card::before{
-      content:"";
-      position:absolute;
-      inset:0;
+      content:""; position:absolute; inset:0;
       background:
         radial-gradient(140px 100px at 15% 20%, rgba(255,255,255,.05), transparent 70%),
         radial-gradient(200px 140px at 80% 70%, rgba(0,0,0,.4), transparent 70%);
       pointer-events:none;
     }
-
-    .inner{ position:relative; z-index:1; }
-
+    .inner{position:relative;z-index:1}
     .label{
-      display:inline-block;
-      margin-bottom:10px;
-      font-size:12px;
-      color:var(--accent);
-      border:1px solid rgba(215,196,155,.4);
-      padding:4px 10px;
-      border-radius:999px;
+      display:inline-block; margin-bottom:10px; font-size:12px; color:var(--accent);
+      border:1px solid rgba(215,196,155,.4); padding:4px 10px; border-radius:999px;
       letter-spacing:.08em;
     }
-
-    .text{
-      margin:10px 0 18px;
-      font-size:clamp(15px,2.3vw,18px);
-      line-height:1.8;
-      white-space:pre-wrap;
+    pre{
+      margin:12px 0 16px; padding:14px 12px; border-radius:14px;
+      background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);
+      overflow:auto; color:var(--ink); line-height:1.7; font-size:15px;
     }
-
-    .text strong{
-      color:var(--accent);
-      font-weight:800;
-    }
-
-    .controls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:center;
-      margin-top:10px;
-    }
-
+    .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
     input{
-      width:min(360px,100%);
-      height:46px;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.15);
-      background:rgba(0,0,0,.4);
-      color:var(--ink);
-      font-size:16px;
-      text-align:center;
-      outline:none;
+      width:min(340px,100%); height:46px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.15); background:rgba(0,0,0,.4);
+      color:var(--ink); font-size:16px; text-align:center; outline:none;
     }
-
-    input:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 3px rgba(215,196,155,.2);
-    }
-
+    input:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(215,196,155,.2)}
     button{
-      height:46px;
-      padding:0 20px;
-      border-radius:12px;
+      height:46px; padding:0 20px; border-radius:12px;
       border:1px solid rgba(255,255,255,.15);
       background:linear-gradient(180deg, rgba(215,196,155,.25), rgba(0,0,0,.3));
-      color:var(--ink);
-      font-weight:800;
-      cursor:pointer;
+      color:var(--ink); font-weight:800; cursor:pointer;
     }
-
-    .msg{
-      margin-top:14px;
-      min-height:26px;
-      text-align:center;
-      font-size:15px;
-    }
-
-    .msg.ok{
-      color:var(--ok);
-      font-weight:900;
-      text-shadow:0 0 12px rgba(124,255,178,.2);
-    }
-
-    .msg.bad{
-      color:var(--bad);
-      font-weight:800;
-    }
-
-    .hint{
-      margin-top:8px;
-      text-align:center;
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    footer{
-      margin-top:14px;
-      text-align:center;
-      font-size:12px;
-      color:rgba(183,173,155,.7);
-    }
+    .msg{margin-top:14px; min-height:26px; text-align:center; font-size:15px}
+    .msg.ok{color:var(--ok); font-weight:900; text-shadow:0 0 12px rgba(124,255,178,.2)}
+    .msg.bad{color:var(--bad); font-weight:800}
+    .hint{margin-top:8px;text-align:center;font-size:12px;color:var(--muted)}
   </style>
 </head>
-
 <body>
   <div class="wrap">
     <header>
-      <h1>유관순 서대문형무소의 노래</h1>
-      <div class="sub">마지막까지 울려 퍼진 한 문장</div>
+      <h1>서대문형무소의 철창 숫자</h1>
+      <div class="sub">각 철창의 결과(한 자리)를 이어 4자리 비밀번호를 만들어라</div>
     </header>
 
     <section class="card">
       <div class="inner">
-        <span class="label">지문</span>
-
-        <div class="text">
-유관순이 마지막까지 부른 노래는
-
-<strong>[ __________________ ]</strong>
-        </div>
+        <span class="label">퍼즐</span>
+        <pre>
+[철창 1]  (16 - 8) ÷ 8  =  ?
+[철창 2]  (12 ÷ 4) × (6 - 3)  =  ?
+[철창 3]  (9 + 3) ÷ (8 - 2)  =  ?
+[철창 4]  (7 - 7) × 9  =  ?
+        </pre>
 
         <div class="controls">
-          <input id="answer" type="text" placeholder="정답 입력 (띄어쓰기 없이)" />
-          <button id="checkBtn">확인</button>
+          <input id="answer" inputmode="numeric" maxlength="4" placeholder="비밀번호 4자리 입력" />
+          <button id="checkBtn" type="button">확인</button>
         </div>
 
-        <div id="msg" class="msg"></div>
-        <div class="hint">힌트: 조국을 향한 마지막 외침</div>
+        <div id="msg" class="msg" aria-live="polite"></div>
+        <div class="hint">힌트: 각 줄의 계산 결과는 한 자리 숫자</div>
       </div>
     </section>
-
-    <footer>
-      GitHub Pages 배포 가능 · 단일 HTML · 서대문형무소 크라임씬 퀴즈
-    </footer>
   </div>
 
   <script>
     (function(){
-      const ANSWER = "대한이살았다";
-      const SUCCESS_TEXT = "정답! 대한독립만세!";
-
+      const ANSWER = "1920";
       const input = document.getElementById("answer");
       const btn = document.getElementById("checkBtn");
       const msg = document.getElementById("msg");
 
-      function normalize(v){
-        return (v || "").replace(/\s+/g,"").trim();
+      function sanitize(){
+        const v = (input.value || "").replace(/\D/g,"").slice(0,4);
+        if(input.value !== v) input.value = v;
       }
 
       function check(){
-        const value = normalize(input.value);
-
-        if(!value){
-          msg.textContent = "정답을 입력해.";
+        sanitize();
+        const v = input.value;
+        if(!v){
+          msg.textContent = "비밀번호를 입력해.";
           msg.className = "msg bad";
+          input.focus();
           return;
         }
-
-        if(value === ANSWER){
-          msg.textContent = SUCCESS_TEXT;
+        if(v === ANSWER){
+          msg.textContent = "정답! 1920";
           msg.className = "msg ok";
         }else{
-          msg.textContent = "아직… 그 노래가 들리지 않는다.";
+          msg.textContent = "아니야. 다시 계산해봐.";
           msg.className = "msg bad";
           input.focus();
           input.select();
         }
       }
 
+      input.addEventListener("input", sanitize);
+      input.addEventListener("keydown", (e)=>{ if(e.key==="Enter") check(); });
       btn.addEventListener("click", check);
-      input.addEventListener("keydown", e=>{
-        if(e.key==="Enter") check();
-      });
-
       input.focus();
     })();
   </script>
 </body>
 </html>
+
