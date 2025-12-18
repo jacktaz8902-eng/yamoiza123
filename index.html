@@ -1,482 +1,235 @@
-<!-- Save as: jeon_guard_riddle.html -->
+<!-- Save as: mystery_riddle_mirror.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>전경비의 수첩 메모 - 마지막 문장</title>
+  <title>마지막 문장</title>
+
   <style>
     :root{
       --bg:#05070b;
       --ink:#e8e1d2;
       --muted:#b9ae97;
-      --paper:#0f141e;
-      --paper2:#0b0f18;
+      --panel:#0f141e;
       --accent:#d7c49b;
+      --ghost:#9fe7ff;
       --ok:#7CFFB2;
       --bad:#ff6b6b;
       --shadow: rgba(0,0,0,.75);
-      --ghost:#9fe7ff;
     }
 
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
+
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
-      color: var(--ink);
-      background: var(--bg);
+      font-family: system-ui, -apple-system, "Noto Sans KR", Arial, sans-serif;
+      color:var(--ink);
+      background:var(--bg);
       display:flex;
       align-items:center;
       justify-content:center;
-      padding: 24px 14px;
-      overflow-x:hidden;
+      padding:22px 14px;
+      overflow:hidden;
 
-      /* 미스터리 + 낡은 벽 + 차가운 안개 + 철창 결 */
+      /* 어두운 감방 + 안개 */
       background-image:
-        radial-gradient(900px 600px at 20% 15%, rgba(255,255,255,.06), transparent 58%),
-        radial-gradient(900px 700px at 80% 30%, rgba(160,231,255,.05), transparent 62%),
-        radial-gradient(700px 420px at 50% 90%, rgba(255,255,255,.035), transparent 60%),
+        radial-gradient(900px 600px at 20% 15%, rgba(255,255,255,.06), transparent 60%),
+        radial-gradient(900px 700px at 80% 30%, rgba(159,231,255,.05), transparent 62%),
         repeating-linear-gradient(90deg, rgba(255,255,255,.025), rgba(255,255,255,.025) 2px, transparent 2px, transparent 28px),
-        repeating-linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,.35) 1px, transparent 1px, transparent 9px),
-        linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.45));
-      background-blend-mode: screen, screen, screen, overlay, multiply, normal;
+        repeating-linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,.35) 1px, transparent 1px, transparent 9px);
+      background-blend-mode: screen, screen, overlay, multiply;
     }
 
     .wrap{
-      width: min(920px, 100%);
-      display:flex;
-      flex-direction:column;
-      gap: 14px;
-      align-items: stretch;
+      width:min(860px,100%);
       position:relative;
     }
 
     header{
       text-align:center;
-      padding: 8px 6px 2px;
-      position:relative;
+      margin-bottom:14px;
     }
 
     h1{
       margin:0;
-      font-size: clamp(22px, 3.2vw, 34px);
-      letter-spacing: .02em;
-      text-shadow: 0 2px 16px rgba(0,0,0,.65);
-    }
-    .sub{
-      margin-top: 8px;
-      font-size: clamp(12px, 1.7vw, 14px);
-      color: var(--muted);
-      letter-spacing: .14em;
+      font-size:clamp(22px,3.2vw,34px);
+      text-shadow:0 2px 16px rgba(0,0,0,.65);
     }
 
-    /* 귀신 실루엣(가벼운 장식) - CSS만 */
-    .ghost1, .ghost2{
+    .sub{
+      margin-top:8px;
+      font-size:13px;
+      color:var(--muted);
+      letter-spacing:.14em;
+    }
+
+    /* 귀신 실루엣 */
+    .ghost{
       position:absolute;
-      width: 180px;
-      height: 220px;
-      filter: blur(0.2px);
-      opacity: .18;
+      width:180px;
+      height:220px;
+      opacity:.18;
       pointer-events:none;
-      mix-blend-mode: screen;
-    }
-    .ghost1{
-      left: -40px;
-      top: 40px;
-      transform: rotate(-8deg);
       background:
-        radial-gradient(70px 90px at 55% 38%, rgba(159,231,255,.35), transparent 70%),
-        radial-gradient(40px 50px at 45% 35%, rgba(255,255,255,.22), transparent 70%),
-        radial-gradient(18px 14px at 46% 38%, rgba(0,0,0,.35), transparent 65%),
-        radial-gradient(18px 14px at 64% 38%, rgba(0,0,0,.35), transparent 65%),
-        radial-gradient(14px 10px at 55% 55%, rgba(0,0,0,.25), transparent 70%),
-        radial-gradient(110px 110px at 52% 70%, rgba(159,231,255,.25), transparent 70%);
-      border-radius: 50% 50% 40% 40%;
+        radial-gradient(80px 100px at 50% 35%, rgba(159,231,255,.35), transparent 70%),
+        radial-gradient(20px 16px at 42% 38%, rgba(0,0,0,.35), transparent 70%),
+        radial-gradient(20px 16px at 58% 38%, rgba(0,0,0,.35), transparent 70%),
+        radial-gradient(120px 140px at 50% 75%, rgba(159,231,255,.25), transparent 70%);
+      border-radius:50% 50% 42% 42%;
+      mix-blend-mode:screen;
     }
-    .ghost2{
-      right: -50px;
-      bottom: 30px;
-      transform: rotate(10deg);
-      background:
-        radial-gradient(78px 98px at 50% 40%, rgba(159,231,255,.26), transparent 72%),
-        radial-gradient(22px 18px at 42% 40%, rgba(0,0,0,.30), transparent 70%),
-        radial-gradient(22px 18px at 58% 40%, rgba(0,0,0,.30), transparent 70%),
-        radial-gradient(14px 10px at 50% 58%, rgba(0,0,0,.22), transparent 70%),
-        radial-gradient(120px 120px at 50% 75%, rgba(255,255,255,.06), transparent 70%);
-      border-radius: 50% 50% 42% 42%;
-    }
+    .ghost.left{ left:-40px; top:40px; }
+    .ghost.right{ right:-40px; bottom:30px; }
 
     .card{
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.38)),
-        radial-gradient(900px 280px at 30% 18%, rgba(255,255,255,.06), transparent 60%),
-        linear-gradient(135deg, rgba(255,255,255,.03), transparent 45%, rgba(0,0,0,.55));
-      background-color: var(--paper);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
-      box-shadow: 0 22px 70px var(--shadow);
-      padding: clamp(18px, 3.2vw, 28px);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.4));
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:18px;
+      padding:26px 22px;
+      box-shadow:0 22px 70px var(--shadow);
       position:relative;
       overflow:hidden;
-    }
-
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background:
-        radial-gradient(140px 100px at 12% 18%, rgba(255,255,255,.07), transparent 70%),
-        radial-gradient(220px 140px at 82% 30%, rgba(0,0,0,.45), transparent 70%),
-        radial-gradient(200px 140px at 62% 82%, rgba(159,231,255,.06), transparent 72%),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.03), rgba(255,255,255,.03) 1px, transparent 1px, transparent 12px);
-      mix-blend-mode: overlay;
-      pointer-events:none;
-      opacity:.95;
-    }
-
-    .inner{ position:relative; z-index:1; }
-
-    .tagRow{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-bottom: 10px;
-      flex-wrap:wrap;
-      justify-content:center;
-    }
-    .tag{
-      font-size: 12px;
-      color: var(--accent);
-      border: 1px solid rgba(215,196,155,.35);
-      background: rgba(215,196,155,.10);
-      padding: 4px 10px;
-      border-radius: 999px;
-      letter-spacing:.08em;
-      white-space:nowrap;
-    }
-    .line{
-      flex:1;
-      height:1px;
-      background: linear-gradient(90deg, rgba(215,196,155,0), rgba(215,196,155,.35), rgba(215,196,155,0));
-      min-width: 80px;
-      opacity:.9;
     }
 
     .note{
-      line-height: 1.85;
-      font-size: clamp(14px, 2.2vw, 18px);
-      white-space: pre-wrap;
-      color: var(--ink);
-      text-shadow: 0 1px 10px rgba(0,0,0,.35);
-      margin: 10px 0 6px;
+      font-size:clamp(14px,2.2vw,18px);
+      line-height:1.8;
+      white-space:pre-wrap;
+      margin-bottom:14px;
     }
 
     .quote{
-      margin: 14px auto 10px;
-      width: min(720px, 100%);
-      padding: 16px 14px;
-      border-radius: 16px;
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(255,255,255,.10);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
-      position:relative;
-      overflow:hidden;
+      margin:16px auto;
+      padding:18px 16px;
+      border-radius:16px;
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.12);
+      font-size:clamp(16px,2.5vw,20px);
+      line-height:1.8;
+      text-align:center;
     }
-    .quote::before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(220px 120px at 20% 30%, rgba(159,231,255,.05), transparent 70%),
-        radial-gradient(240px 140px at 80% 60%, rgba(255,255,255,.04), transparent 75%);
-      pointer-events:none;
-    }
-    .quoteText{
-      position:relative;
-      z-index:1;
-      font-size: clamp(15px, 2.4vw, 20px);
-      line-height: 1.8;
-      letter-spacing:.01em;
-    }
-    .quoteText .em{
-      color: var(--ghost);
-      font-weight: 900;
-      text-shadow: 0 0 18px rgba(159,231,255,.18);
+
+    .quote strong{
+      color:var(--ghost);
+      font-weight:900;
+      text-shadow:0 0 16px rgba(159,231,255,.25);
     }
 
     .controls{
       display:flex;
-      gap: 10px;
-      align-items:center;
+      gap:10px;
       justify-content:center;
-      flex-wrap: wrap;
-      margin-top: 16px;
+      flex-wrap:wrap;
+      margin-top:16px;
     }
 
-    input[type="text"]{
-      width: min(360px, 100%);
-      height: 46px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.36);
-      color: var(--ink);
-      font-size: 17px;
+    input{
+      width:min(360px,100%);
+      height:46px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.4);
+      color:var(--ink);
+      font-size:16px;
       text-align:center;
       outline:none;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
-      padding: 0 12px;
-    }
-    input[type="text"]:focus{
-      border-color: rgba(159,231,255,.45);
-      box-shadow: 0 0 0 3px rgba(159,231,255,.12), inset 0 1px 0 rgba(255,255,255,.06);
     }
 
     button{
-      height: 46px;
-      padding: 0 18px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(159,231,255,.10), rgba(0,0,0,.26));
-      color: var(--ink);
+      height:46px;
+      padding:0 20px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:linear-gradient(180deg, rgba(159,231,255,.15), rgba(0,0,0,.35));
+      color:var(--ink);
+      font-weight:800;
       cursor:pointer;
-      font-weight: 900;
-      letter-spacing:.02em;
-      box-shadow: 0 14px 28px rgba(0,0,0,.42);
-      transition: transform .08s ease;
-      min-width: 110px;
     }
-    button:active{ transform: translateY(1px); }
 
     .msg{
+      margin-top:14px;
+      min-height:26px;
       text-align:center;
-      min-height: 28px;
-      margin-top: 12px;
-      font-size: 14px;
-      color: var(--muted);
-      padding: 0 8px;
+      font-size:15px;
     }
-    .msg.ok{
-      color: var(--ok);
-      font-weight: 900;
-      text-shadow: 0 0 14px rgba(124,255,178,.18);
-    }
-    .msg.bad{
-      color: var(--bad);
-      font-weight: 800;
-    }
+    .msg.ok{ color:var(--ok); font-weight:900; }
+    .msg.bad{ color:var(--bad); font-weight:800; }
 
     .hint{
-      margin-top: 6px;
+      margin-top:6px;
       text-align:center;
-      font-size: 12px;
-      color: rgba(185,174,151,.85);
-      letter-spacing:.04em;
-    }
-
-    /* 모달 */
-    .modal{
-      position:fixed;
-      inset:0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      padding: 18px;
-      background: rgba(0,0,0,.78);
-      z-index: 999;
-    }
-    .modal.show{ display:flex; }
-
-    .modalBox{
-      width: min(560px, 100%);
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background:
-        radial-gradient(900px 260px at 30% 18%, rgba(159,231,255,.08), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.35));
-      background-color: var(--paper2);
-      box-shadow: 0 28px 80px rgba(0,0,0,.72);
-      padding: 22px 18px 16px;
-      text-align:center;
-      position:relative;
-      overflow:hidden;
-    }
-    .modalBox::before{
-      content:"";
-      position:absolute; inset:-2px;
-      background:
-        radial-gradient(240px 140px at 30% 30%, rgba(159,231,255,.06), transparent 70%),
-        radial-gradient(260px 160px at 80% 70%, rgba(255,255,255,.04), transparent 75%);
-      pointer-events:none;
-    }
-    .modalTitle{
-      position:relative;
-      margin: 0 0 8px;
-      font-size: 28px;
-      color: var(--ok);
-      letter-spacing:.02em;
-      text-shadow: 0 0 18px rgba(124,255,178,.16);
-      z-index:1;
-    }
-    .modalText{
-      position:relative;
-      margin: 0 0 14px;
-      font-size: 16px;
-      color: var(--ink);
-      line-height: 1.65;
-      z-index:1;
-    }
-    .modalText strong{
-      color: var(--ghost);
-      font-weight: 900;
-    }
-    .modalActions{
-      position:relative;
-      display:flex;
-      justify-content:center;
-      gap: 10px;
-      margin-top: 6px;
-      z-index:1;
-    }
-    .ghostBtn{
-      background: rgba(0,0,0,.18);
-      border-color: rgba(159,231,255,.22);
-    }
-
-    @media (max-width: 420px){
-      button{ width: 100%; }
-      .controls{ gap: 8px; }
+      font-size:12px;
+      color:var(--muted);
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <div class="ghost1" aria-hidden="true"></div>
-    <div class="ghost2" aria-hidden="true"></div>
+    <div class="ghost left"></div>
+    <div class="ghost right"></div>
 
     <header>
-      <h1>전경비의 수첩 메모</h1>
-      <div class="sub">마지막 문장 · “나”를 찾아라</div>
+      <h1>마지막 문장</h1>
+      <div class="sub">믿는 순간, 틀린다</div>
     </header>
 
-    <section class="card" aria-label="전경비 수수께끼 카드">
-      <div class="inner">
-        <div class="tagRow">
-          <span class="tag">전기자의 메모</span>
-          <div class="line"></div>
-          <span class="tag">서늘한 단서</span>
-        </div>
+    <section class="card">
+      <div class="note">
+낡은 수첩의 마지막 장에
+이 문장만 남아 있었다.
+      </div>
 
-        <div class="note">
-전경비(전기자)가 남긴 마지막 문장이다.
-지금도 누군가 이 문장을 읽으면,
-서재 안쪽에서 “찰칵” 하는 소리가 난다고 했다.
-        </div>
-
-        <div class="quote" aria-label="수수께끼 문장">
-          <div class="quoteText">
-“나는 <span class="em">거짓말</span>을 하지 않는다.<br/>
+      <div class="quote">
+“나는 <strong>거짓말</strong>을 하지 않는다.<br/>
 하지만 나를 믿는 순간, 너는 틀린다.”
-          </div>
-        </div>
-
-        <div class="controls">
-          <input id="answer" type="text" autocomplete="off" spellcheck="false"
-                 placeholder="정답을 입력하세요" aria-label="정답 입력" />
-          <button id="checkBtn" type="button">확인</button>
-        </div>
-
-        <div id="msg" class="msg" aria-live="polite"></div>
-        <div class="hint">힌트: 글자가 아니라 ‘비추는 것’이다.</div>
       </div>
+
+      <div class="controls">
+        <input id="answer" placeholder="정답을 입력하세요" />
+        <button id="checkBtn">확인</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+      <div class="hint">힌트: 진실을 말하지만, 그대로 믿으면 안 된다.</div>
     </section>
-  </div>
-
-  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modalBox">
-      <h2 id="modalTitle" class="modalTitle">정답!</h2>
-      <p class="modalText">“나”는 <strong>거울</strong>이다.<br/>성공! 카메라 가방에 중요한 단서가!!!!!</p>
-      <div class="modalActions">
-        <button id="closeModal" class="ghostBtn" type="button">닫기</button>
-      </div>
-    </div>
   </div>
 
   <script>
     (function(){
-      const ANSWERS = ["거울", "미러", "mirror"]; // 허용 답
+      const ANSWERS = ["거울","미러","mirror"];
       const input = document.getElementById("answer");
       const btn = document.getElementById("checkBtn");
       const msg = document.getElementById("msg");
-      const modal = document.getElementById("modal");
-      const closeModal = document.getElementById("closeModal");
 
-      function normalize(s){
-        return (s || "").replace(/\s+/g, "").trim().toLowerCase();
-      }
-
-      function showMessage(text, type){
-        msg.textContent = text;
-        msg.className = "msg" + (type ? (" " + type) : "");
-      }
-
-      function openModal(){
-        modal.classList.add("show");
-        closeModal.focus();
-      }
-      function close(){
-        modal.classList.remove("show");
-        input.focus();
+      function normalize(v){
+        return (v||"").replace(/\s+/g,"").toLowerCase();
       }
 
       function check(){
-        const vRaw = input.value;
-        const v = normalize(vRaw);
-
+        const v = normalize(input.value);
         if(!v){
-          showMessage("정답을 입력해.", "bad");
-          input.focus();
+          msg.textContent = "정답을 입력해.";
+          msg.className = "msg bad";
           return;
         }
-
-        const ok = ANSWERS.some(a => normalize(a) === v);
-        if(ok){
-          showMessage("", "");
-          openModal();
+        if(ANSWERS.some(a=>normalize(a)===v)){
+          msg.textContent = "정답! 거울";
+          msg.className = "msg ok";
         }else{
-          showMessage("…아니야. 다시 읽어봐. 믿는 순간 틀린다.", "bad");
+          msg.textContent = "…아니야. 다시 생각해봐.";
+          msg.className = "msg bad";
           input.focus();
           input.select();
         }
       }
 
-      btn.addEventListener("click", check);
-      input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") check(); });
-
-      closeModal.addEventListener("click", close);
-      modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
-      document.addEventListener("keydown", (e)=>{
-        if(e.key === "Escape" && modal.classList.contains("show")) close();
-      });
-
-      // 가벼운 “유령 흔들림” 느낌: 클래스 없이 JS로 미세 이동
-      const g1 = document.querySelector(".ghost1");
-      const g2 = document.querySelector(".ghost2");
-      let t = 0;
-      function drift(){
-        t += 0.016;
-        const x1 = Math.sin(t) * 6;
-        const y1 = Math.cos(t*0.9) * 5;
-        const x2 = Math.cos(t*0.8) * 7;
-        const y2 = Math.sin(t*1.1) * 6;
-        if(g1) g1.style.transform = `translate(${x1}px, ${y1}px) rotate(-8deg)`;
-        if(g2) g2.style.transform = `translate(${x2}px, ${y2}px) rotate(10deg)`;
-        requestAnimationFrame(drift);
-      }
-      drift();
-
+      btn.onclick = check;
+      input.onkeydown = e => { if(e.key==="Enter") check(); };
       input.focus();
     })();
   </script>
 </body>
 </html>
-
