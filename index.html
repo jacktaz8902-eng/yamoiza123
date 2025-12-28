@@ -1,11 +1,10 @@
-<!-- Save as: mystery_riddle_mirror.html -->
+<!-- Save as: mystery_prison_riddle.html -->
 <!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>마지막 문장</title>
-
+  <title>세상에서 가장 빠른 감옥</title>
   <style>
     :root{
       --bg:#05070b;
@@ -16,12 +15,10 @@
       --ghost:#9fe7ff;
       --ok:#7CFFB2;
       --bad:#ff6b6b;
-      --shadow: rgba(0,0,0,.75);
+      --shadow: rgba(0,0,0,.78);
     }
-
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
-
     body{
       margin:0;
       font-family: system-ui, -apple-system, "Noto Sans KR", Arial, sans-serif;
@@ -31,33 +28,25 @@
       align-items:center;
       justify-content:center;
       padding:22px 14px;
-      overflow:hidden;
-
-      /* 어두운 감방 + 안개 */
+      overflow-x:hidden;
+      /* 으스스한 배경 */
       background-image:
         radial-gradient(900px 600px at 20% 15%, rgba(255,255,255,.06), transparent 60%),
         radial-gradient(900px 700px at 80% 30%, rgba(159,231,255,.05), transparent 62%),
-        repeating-linear-gradient(90deg, rgba(255,255,255,.025), rgba(255,255,255,.025) 2px, transparent 2px, transparent 28px),
-        repeating-linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,.35) 1px, transparent 1px, transparent 9px);
+        repeating-linear-gradient(90deg, rgba(255,255,255,.02), rgba(255,255,255,.02) 2px, transparent 2px, transparent 28px),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.38), rgba(0,0,0,.38) 1px, transparent 1px, transparent 9px);
       background-blend-mode: screen, screen, overlay, multiply;
     }
 
-    .wrap{
-      width:min(860px,100%);
-      position:relative;
-    }
+    .wrap{ width:min(860px,100%); position:relative; }
 
-    header{
-      text-align:center;
-      margin-bottom:14px;
-    }
-
+    header{ text-align:center; margin-bottom:14px; }
     h1{
       margin:0;
       font-size:clamp(22px,3.2vw,34px);
       text-shadow:0 2px 16px rgba(0,0,0,.65);
+      letter-spacing:.02em;
     }
-
     .sub{
       margin-top:8px;
       font-size:13px;
@@ -65,13 +54,10 @@
       letter-spacing:.14em;
     }
 
-    /* 귀신 실루엣 */
     .ghost{
       position:absolute;
-      width:180px;
-      height:220px;
-      opacity:.18;
-      pointer-events:none;
+      width:180px; height:220px;
+      opacity:.16; pointer-events:none;
       background:
         radial-gradient(80px 100px at 50% 35%, rgba(159,231,255,.35), transparent 70%),
         radial-gradient(20px 16px at 42% 38%, rgba(0,0,0,.35), transparent 70%),
@@ -79,12 +65,13 @@
         radial-gradient(120px 140px at 50% 75%, rgba(159,231,255,.25), transparent 70%);
       border-radius:50% 50% 42% 42%;
       mix-blend-mode:screen;
+      filter: blur(.2px);
     }
     .ghost.left{ left:-40px; top:40px; }
     .ghost.right{ right:-40px; bottom:30px; }
 
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.4));
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.42));
       border:1px solid rgba(255,255,255,.10);
       border-radius:18px;
       padding:26px 22px;
@@ -92,29 +79,62 @@
       position:relative;
       overflow:hidden;
     }
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background:
+        radial-gradient(240px 160px at 20% 25%, rgba(159,231,255,.06), transparent 70%),
+        radial-gradient(240px 160px at 80% 70%, rgba(255,255,255,.04), transparent 75%),
+        repeating-linear-gradient(90deg, rgba(255,255,255,.02), rgba(255,255,255,.02) 1px, transparent 1px, transparent 12px);
+      mix-blend-mode: overlay;
+      pointer-events:none;
+      opacity:.95;
+    }
+    .inner{ position:relative; z-index:1; }
 
-    .note{
-      font-size:clamp(14px,2.2vw,18px);
-      line-height:1.8;
-      white-space:pre-wrap;
-      margin-bottom:14px;
+    .badgeRow{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+      justify-content:center; margin-bottom:10px;
+    }
+    .badge{
+      display:inline-block;
+      font-size:12px;
+      color:var(--accent);
+      border:1px solid rgba(215,196,155,.35);
+      background: rgba(215,196,155,.10);
+      padding:4px 10px;
+      border-radius:999px;
+      letter-spacing:.08em;
+      white-space:nowrap;
+    }
+    .badge.alt{
+      border-color: rgba(159,231,255,.25);
+      background: rgba(159,231,255,.08);
+      color: var(--ghost);
+    }
+    .line{
+      flex:1;
+      height:1px;
+      min-width: 90px;
+      background: linear-gradient(90deg, rgba(215,196,155,0), rgba(215,196,155,.35), rgba(215,196,155,0));
+      opacity:.9;
     }
 
-    .quote{
-      margin:16px auto;
-      padding:18px 16px;
+    .riddle{
+      margin: 12px 0 16px;
+      padding: 16px 14px;
       border-radius:16px;
-      background:rgba(0,0,0,.28);
+      background:rgba(0,0,0,.30);
       border:1px solid rgba(255,255,255,.12);
-      font-size:clamp(16px,2.5vw,20px);
-      line-height:1.8;
+      font-size:clamp(15px,2.3vw,19px);
+      line-height:1.85;
+      white-space:pre-wrap;
       text-align:center;
     }
-
-    .quote strong{
-      color:var(--ghost);
+    .riddle strong{
+      color: var(--ghost);
       font-weight:900;
-      text-shadow:0 0 16px rgba(159,231,255,.25);
+      text-shadow:0 0 16px rgba(159,231,255,.2);
     }
 
     .controls{
@@ -122,31 +142,40 @@
       gap:10px;
       justify-content:center;
       flex-wrap:wrap;
-      margin-top:16px;
+      margin-top:10px;
     }
-
     input{
       width:min(360px,100%);
       height:46px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.4);
+      background:rgba(0,0,0,.42);
       color:var(--ink);
       font-size:16px;
       text-align:center;
       outline:none;
+      padding:0 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06);
     }
-
+    input:focus{
+      border-color: rgba(159,231,255,.42);
+      box-shadow: 0 0 0 3px rgba(159,231,255,.12);
+    }
     button{
       height:46px;
-      padding:0 20px;
+      padding:0 18px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.14);
-      background:linear-gradient(180deg, rgba(159,231,255,.15), rgba(0,0,0,.35));
+      background:linear-gradient(180deg, rgba(159,231,255,.14), rgba(0,0,0,.34));
       color:var(--ink);
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
+      box-shadow: 0 14px 28px rgba(0,0,0,.42);
+      letter-spacing:.02em;
+      min-width: 120px;
+      transition: transform .08s ease;
     }
+    button:active{ transform: translateY(1px); }
 
     .msg{
       margin-top:14px;
@@ -154,7 +183,7 @@
       text-align:center;
       font-size:15px;
     }
-    .msg.ok{ color:var(--ok); font-weight:900; }
+    .msg.ok{ color:var(--ok); font-weight:900; text-shadow:0 0 14px rgba(124,255,178,.14); }
     .msg.bad{ color:var(--bad); font-weight:800; }
 
     .hint{
@@ -162,72 +191,169 @@
       text-align:center;
       font-size:12px;
       color:var(--muted);
+      letter-spacing:.04em;
+    }
+
+    /* 모달 */
+    .modal{
+      position:fixed; inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      background: rgba(0,0,0,.82);
+      z-index: 999;
+    }
+    .modal.show{ display:flex; }
+    .modalBox{
+      width:min(560px,100%);
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:
+        radial-gradient(900px 260px at 30% 18%, rgba(159,231,255,.08), transparent 60%),
+        linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.38));
+      background-color:#0b1018;
+      box-shadow:0 28px 80px rgba(0,0,0,.72);
+      padding:22px 18px 16px;
+      text-align:center;
+    }
+    .modalTitle{
+      margin:0 0 8px;
+      font-size:28px;
+      color:var(--ok);
+      text-shadow:0 0 18px rgba(124,255,178,.16);
+    }
+    .modalText{
+      margin:0 0 14px;
+      font-size:16px;
+      line-height:1.65;
+      color:var(--ink);
+    }
+    .modalText strong{ color:var(--ghost); font-weight:900; }
+    .modalActions{ display:flex; justify-content:center; gap:10px; margin-top:6px; }
+    .btnGhost{
+      background: rgba(0,0,0,.18);
+      border-color: rgba(159,231,255,.22);
+    }
+
+    @media (max-width: 420px){
+      button{ width:100%; }
     }
   </style>
 </head>
 
 <body>
   <div class="wrap">
-    <div class="ghost left"></div>
-    <div class="ghost right"></div>
+    <div class="ghost left" aria-hidden="true"></div>
+    <div class="ghost right" aria-hidden="true"></div>
 
     <header>
-      <h1>마지막 문장</h1>
-      <div class="sub">믿는 순간, 틀린다</div>
+      <h1>세상에서 가장 빠른 감옥</h1>
+      <div class="sub">한 번 들어가면, 나오기 어렵다</div>
     </header>
 
-    <section class="card">
-      <div class="note">
-낡은 수첩의 마지막 장에
-이 문장만 남아 있었다.
-      </div>
+    <section class="card" aria-label="수수께끼 카드">
+      <div class="inner">
+        <div class="badgeRow">
+          <span class="badge">RIDDLE</span>
+          <div class="line"></div>
+          <span class="badge alt">LOCKED WITHOUT A LOCK</span>
+        </div>
 
-      <div class="quote">
-“나는 <strong>거짓말</strong>을 하지 않는다.<br/>
-하지만 나를 믿는 순간, 너는 틀린다.”
-      </div>
+        <div class="riddle">
+나는 가두는 곳이지만,
+문도 없고 자물쇠도 없다.
+그런데 한 번 들어가면
+스스로 나오기 어렵다.
 
-      <div class="controls">
-        <input id="answer" placeholder="정답을 입력하세요" />
-        <button id="checkBtn">확인</button>
-      </div>
+<strong>나는 무엇일까?</strong>
+        </div>
 
-      <div id="msg" class="msg"></div>
-      <div class="hint">힌트: 진실을 말하지만, 그대로 믿으면 안 된다.</div>
+        <div class="controls">
+          <input id="answer" placeholder="정답을 입력하세요 (예: 불안)" autocomplete="off" spellcheck="false" />
+          <button id="checkBtn" type="button">확인</button>
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite"></div>
+        <div class="hint">힌트: 마음속에서 가장 빠르게 닫힌다.</div>
+      </div>
     </section>
+  </div>
+
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modalBox">
+      <h2 id="modalTitle" class="modalTitle">정답!</h2>
+      <p class="modalText">정답! 카메라 가방을 찾아라!</p>
+      <div class="modalActions">
+        <button id="closeModal" class="btnGhost" type="button">닫기</button>
+      </div>
+    </div>
   </div>
 
   <script>
     (function(){
-      const ANSWERS = ["거울","미러","mirror"];
+      // ✅ 허용 정답 4개 (오탈자 '집찹'도 허용)
+      const ACCEPT = [
+        "불안",
+        "생각",
+        "의심",
+        "집착",
+        "집찹" // 사용자가 적은 오탈자도 허용
+      ];
+
       const input = document.getElementById("answer");
       const btn = document.getElementById("checkBtn");
       const msg = document.getElementById("msg");
+      const modal = document.getElementById("modal");
+      const closeModal = document.getElementById("closeModal");
 
       function normalize(v){
-        return (v||"").replace(/\s+/g,"").toLowerCase();
+        return (v || "").replace(/\s+/g, "").trim().toLowerCase();
+      }
+
+      function showMessage(text, type){
+        msg.textContent = text;
+        msg.className = "msg" + (type ? (" " + type) : "");
+      }
+
+      function openModal(){
+        modal.classList.add("show");
+        closeModal.focus();
+      }
+
+      function close(){
+        modal.classList.remove("show");
+        input.focus();
       }
 
       function check(){
         const v = normalize(input.value);
         if(!v){
-          msg.textContent = "정답을 입력해.";
-          msg.className = "msg bad";
+          showMessage("정답을 입력해.", "bad");
+          input.focus();
           return;
         }
-        if(ANSWERS.some(a=>normalize(a)===v)){
-          msg.textContent = "정답! 거울";
-          msg.className = "msg ok";
+
+        const ok = ACCEPT.some(a => normalize(a) === v);
+        if(ok){
+          showMessage("", "");
+          openModal();
         }else{
-          msg.textContent = "…아니야. 다시 생각해봐.";
-          msg.className = "msg bad";
+          showMessage("…아니야. 다시 생각해봐.", "bad");
           input.focus();
           input.select();
         }
       }
 
-      btn.onclick = check;
-      input.onkeydown = e => { if(e.key==="Enter") check(); };
+      btn.addEventListener("click", check);
+      input.addEventListener("keydown", (e)=>{ if(e.key === "Enter") check(); });
+
+      closeModal.addEventListener("click", close);
+      modal.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
+      document.addEventListener("keydown", (e)=>{
+        if(e.key === "Escape" && modal.classList.contains("show")) close();
+      });
+
       input.focus();
     })();
   </script>
